@@ -7,25 +7,53 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+
+<!-- Firebase (opcional) — habilita que el negocio edite precios/productos y todos los visitantes vean el cambio en vivo. Si no se configura FIREBASE_CONFIG más abajo, la tarjeta funciona igual en "modo demo" (los cambios del panel se guardan solo en ese navegador). Ver ADMIN-SETUP.md -->
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+
 <style>
+  :root{ --brand:#e8730c; --brand-dark:#9a3412; }
   body{ font-family:'Poppins',sans-serif; }
+  .font-display{ font-family:'Fredoka',sans-serif; }
   .fade-in{ animation:fadeIn .6s ease-in-out; }
   @keyframes fadeIn{ from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
   .modal-scroll{ max-height:82vh; overflow-y:auto; }
-  .glass{ background:rgba(255,255,255,.9); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+  .glass{ background:rgba(255,255,255,.92); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
   ::-webkit-scrollbar{ width:6px; }
-  ::-webkit-scrollbar-thumb{ background:#d9a441; border-radius:10px; }
+  ::-webkit-scrollbar-thumb{ background:var(--brand); border-radius:10px; }
+
+  .brand-grad{ background:linear-gradient(135deg, var(--brand), var(--brand-dark)); }
+  .brand-bg{ background:var(--brand); }
+  .brand-text{ color:var(--brand); }
+  .brand-border{ border-color:var(--brand); }
+  .icon-circle{ background:#fff7ed; box-shadow:0 2px 6px rgba(0,0,0,.08); transition:.2s ease; }
+  .icon-circle:hover{ transform:translateY(-3px); box-shadow:0 8px 16px rgba(0,0,0,.12); }
+
+  .admin-field label{ font-size:11px; font-weight:600; color:#6b7280; display:block; margin-bottom:4px; }
+  .admin-field input, .admin-field textarea, .admin-field select{
+    width:100%; border:1px solid #e5e7eb; border-radius:.75rem; padding:.5rem .75rem; font-size:13px;
+  }
+  .admin-field input:focus, .admin-field textarea:focus, .admin-field select:focus{ outline:2px solid var(--brand); }
+  .admin-section-title{ font-size:12px; text-transform:uppercase; letter-spacing:.05em; font-weight:700; color:var(--brand-dark); margin:1.25rem 0 .5rem; }
 </style>
 </head>
 <body class="bg-gradient-to-br from-amber-100 to-yellow-50 flex justify-center sm:items-center min-h-screen sm:p-4">
 
 <div class="w-full sm:max-w-sm bg-white sm:rounded-3xl sm:shadow-xl overflow-hidden fade-in relative min-h-screen sm:min-h-0 flex flex-col">
 
+  <!-- ============ MODO DEMO (banner, se oculta si Firebase está activo) ============ -->
+  <div id="demo-banner" class="hidden brand-bg text-white text-[11px] text-center py-1.5 px-3 leading-tight">
+    Modo demostración: los cambios del panel se guardan solo en este navegador. Ver <b>ADMIN-SETUP.md</b> para activar el guardado en la nube.
+  </div>
+
   <!-- ============ PORTADA ============ -->
-  <div class="relative h-56 bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-500 flex items-center justify-center overflow-hidden">
-    <div class="absolute inset-0 opacity-20 text-8xl flex flex-wrap gap-4 p-2 select-none">🌵🍔🌶️🌮🥙🌵🍔🌶️</div>
-    <div class="absolute top-3 right-3 bg-red-800/90 text-amber-50 text-[10px] font-bold px-3 py-1.5 rounded-full text-center leading-tight shadow">🏆 CAMPEÓN<br>BURGER MASTER 2024</div>
+  <div id="hero" class="relative h-56 brand-grad flex items-center justify-center overflow-hidden bg-cover bg-center">
+    <div id="hero-pattern" class="absolute inset-0 opacity-20 text-8xl flex flex-wrap gap-4 p-2 select-none">🌵🍔🌶️🌮🥙🌵🍔🌶️</div>
+    <div class="absolute inset-0" style="background:linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,.35) 100%);"></div>
+    <div id="rbadge" class="absolute top-3 right-3 bg-red-800/90 text-amber-50 text-[10px] font-bold px-3 py-1.5 rounded-full text-center leading-tight shadow"></div>
 
     <button onclick="openModal('install-modal')" title="Instalar tarjeta" class="absolute top-4 left-4 z-10 text-white bg-black/25 p-2 rounded-full hover:bg-black/40 transition">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
@@ -34,39 +62,47 @@
 
   <!-- ============ AVATAR + NOMBRE ============ -->
   <div class="relative flex flex-col items-center -mt-12 px-6">
-    <div class="w-24 h-24 rounded-full bg-white shadow-lg flex items-center justify-center text-5xl border-4 border-white">🍔</div>
-    <h1 id="rname" class="mt-3 text-2xl font-extrabold text-gray-800 text-center">Burger Master La Cruz</h1>
-    <p id="rtagline" class="text-sm text-gray-500 mt-1 text-center">Hamburguesas artesanales, tacos y burritos</p>
-    <span class="mt-2 inline-block bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1 rounded-full">📍 La Cruz, Nariño · Delivery y retiro</span>
-    <button onclick="downloadVCard()" class="mt-3 flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-amber-700 transition">
+    <div id="ravatar" class="w-24 h-24 rounded-full bg-white shadow-lg flex items-center justify-center text-5xl border-4 border-white overflow-hidden bg-cover bg-center">🍔</div>
+    <h1 id="rname" class="mt-3 text-2xl font-display font-bold text-gray-800 text-center"></h1>
+    <p id="rtagline" class="text-sm text-gray-500 mt-1 text-center"></p>
+    <span id="rlocbadge" class="mt-2 inline-block bg-amber-100 brand-text text-xs font-semibold px-3 py-1 rounded-full"></span>
+    <button onclick="downloadVCard()" class="mt-3 flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:brand-text transition">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
       Guardar contacto
     </button>
   </div>
 
-  <!-- ============ ICONOS RÁPIDOS ============ -->
-  <div class="flex justify-center gap-6 mt-5 px-6">
-    <a id="call-link" href="tel:+573004214620" class="flex flex-col items-center text-gray-600 hover:text-amber-700 transition w-16">
-      <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-xl">📞</div>
-      <span class="text-xs font-medium mt-1">Llamar</span>
+  <!-- ============ ICONOS RÁPIDOS (circulares) ============ -->
+  <div class="grid grid-cols-3 gap-4 mt-6 px-6 text-center">
+    <a id="call-link" href="#" class="flex flex-col items-center text-gray-600 hover:brand-text transition">
+      <div class="icon-circle w-14 h-14 rounded-full flex items-center justify-center text-xl">📞</div>
+      <span class="text-xs font-medium mt-1.5">Llamar</span>
     </a>
-    <a id="wa-link" href="#" target="_blank" class="flex flex-col items-center text-gray-600 hover:text-green-600 transition w-16">
-      <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-xl">💬</div>
-      <span class="text-xs font-medium mt-1">WhatsApp</span>
+    <a id="wa-link" href="#" target="_blank" class="flex flex-col items-center text-gray-600 hover:text-green-600 transition">
+      <div class="icon-circle w-14 h-14 rounded-full flex items-center justify-center text-xl">💬</div>
+      <span class="text-xs font-medium mt-1.5">WhatsApp</span>
     </a>
-    <a id="maps-link" href="#" target="_blank" class="flex flex-col items-center text-gray-600 hover:text-red-500 transition w-16">
-      <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-xl">📍</div>
-      <span class="text-xs font-medium mt-1">Ubicación</span>
+    <a id="maps-link" href="#" target="_blank" class="flex flex-col items-center text-gray-600 hover:text-red-500 transition">
+      <div class="icon-circle w-14 h-14 rounded-full flex items-center justify-center text-xl">📍</div>
+      <span class="text-xs font-medium mt-1.5">Ubicación</span>
     </a>
-    <button onclick="openShareModal()" class="flex flex-col items-center text-gray-600 hover:text-amber-600 transition w-16">
-      <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-xl">🔗</div>
-      <span class="text-xs font-medium mt-1">Compartir</span>
+    <button onclick="downloadVCard()" class="flex flex-col items-center text-gray-600 hover:brand-text transition">
+      <div class="icon-circle w-14 h-14 rounded-full flex items-center justify-center text-xl">💾</div>
+      <span class="text-xs font-medium mt-1.5">Guardar</span>
     </button>
+    <button onclick="openShareModal()" class="flex flex-col items-center text-gray-600 hover:brand-text transition">
+      <div class="icon-circle w-14 h-14 rounded-full flex items-center justify-center text-xl">🔗</div>
+      <span class="text-xs font-medium mt-1.5">Compartir</span>
+    </button>
+    <a id="ig-link" href="#" target="_blank" class="flex flex-col items-center text-gray-600 hover:text-pink-500 transition">
+      <div class="icon-circle w-14 h-14 rounded-full flex items-center justify-center text-xl">📷</div>
+      <span class="text-xs font-medium mt-1.5">Instagram</span>
+    </a>
   </div>
 
   <!-- ============ BOTONES PRINCIPALES ============ -->
-  <div class="px-6 mt-6 space-y-3 pb-8">
-    <button onclick="openModal('menu-modal')" class="w-full flex items-center gap-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-2xl px-4 py-3.5 shadow-md hover:shadow-lg transition">
+  <div class="px-6 mt-6 space-y-3 pb-6">
+    <button onclick="openModal('menu-modal')" class="w-full flex items-center gap-3 brand-grad text-white rounded-2xl px-4 py-3.5 shadow-md hover:shadow-lg transition">
       <span class="text-xl">🍔</span>
       <span class="font-semibold">Ver carta y pedir</span>
       <span class="ml-auto text-white/80">→</span>
@@ -81,14 +117,12 @@
       <span class="font-semibold text-gray-700">Nuestros platos</span>
       <span class="ml-auto text-gray-400">→</span>
     </button>
-    <a id="ig-link" href="#" target="_blank" class="w-full flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3.5 hover:bg-gray-100 transition">
-      <span class="text-xl">📷</span>
-      <span class="font-semibold text-gray-700">Síguenos en Instagram</span>
-      <span class="ml-auto text-gray-400">→</span>
-    </a>
   </div>
 
-  <div class="text-center text-xs text-gray-400 pb-6">Tarjeta digital creada para tu negocio</div>
+  <div class="mt-auto text-center pb-6 space-y-1.5">
+    <button onclick="openAdminEntry()" class="text-[11px] text-gray-300 hover:text-gray-500 transition">⚙️ Panel del negocio</button>
+    <p id="footer-credit" class="text-[11px] text-gray-300"></p>
+  </div>
 </div>
 
 <!-- ============ MODAL: MENÚ Y CARRITO ============ -->
@@ -114,6 +148,7 @@
 
     <div id="cart-totals" class="hidden text-sm mt-3 space-y-1">
       <div class="flex justify-between"><span>Subtotal</span><span id="cart-subtotal">$0</span></div>
+      <div id="cart-packaging-row" class="flex justify-between"><span id="cart-packaging-label">Empaque</span><span id="cart-packaging">$0</span></div>
       <div class="flex justify-between"><span>Delivery</span><span id="cart-delivery">$0</span></div>
       <div class="flex justify-between font-bold text-base border-t pt-2 mt-1"><span>Total</span><span id="cart-total">$0</span></div>
     </div>
@@ -136,12 +171,7 @@
       </div>
       <div>
         <label class="text-xs font-semibold text-gray-500 block mb-1">Método de pago</label>
-        <select id="cf-payment" onchange="updatePaymentNote()" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
-          <option value="efectivo">Efectivo contraentrega</option>
-          <option value="nequi">Nequi</option>
-          <option value="bancolombia">Transferencia Bancolombia</option>
-          <option value="llave">Llave</option>
-        </select>
+        <select id="cf-payment" onchange="updatePaymentNote()" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"></select>
       </div>
       <div id="cf-payment-note" class="hidden text-xs bg-amber-50 text-gray-600 rounded-xl p-3 leading-relaxed"></div>
 
@@ -158,7 +188,7 @@
     <button onclick="closeModal('hours-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-xl">✕</button>
     <h2 class="font-bold text-gray-800 mb-4">🕒 Horario de atención</h2>
     <div id="hours-list" class="space-y-2 text-sm"></div>
-    <p id="rlocation" class="text-xs text-gray-500 mt-4">📍 Al lado de la Iglesia Católica, La Cruz, Nariño</p>
+    <p id="rlocation" class="text-xs text-gray-500 mt-4"></p>
   </div>
 </div>
 
@@ -168,7 +198,6 @@
     <button onclick="closeModal('gallery-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-xl">✕</button>
     <h2 class="font-bold text-gray-800 mb-4">📸 Nuestros platos</h2>
     <div id="gallery-grid" class="grid grid-cols-2 gap-3"></div>
-    <p class="text-xs text-gray-400 mt-4">Demo con marcadores — se reemplazan por fotos reales de los platos.</p>
   </div>
 </div>
 
@@ -193,81 +222,223 @@
   </div>
 </div>
 
+<!-- ============ MODAL: LOGIN ADMIN ============ -->
+<div id="admin-login-modal" class="fixed inset-0 bg-black/50 hidden items-end sm:items-center justify-center z-40">
+  <div class="glass w-full sm:max-w-sm sm:rounded-3xl rounded-t-3xl relative p-6">
+    <button onclick="closeModal('admin-login-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-xl">✕</button>
+    <h2 class="font-bold text-gray-800 mb-1">⚙️ Panel del negocio</h2>
+    <p class="text-xs text-gray-500 mb-4">Solo para el dueño del restaurante. Aquí puedes editar precios, agregar productos y actualizar los datos de tu tarjeta.</p>
+
+    <div id="admin-login-cloud" class="space-y-3 hidden">
+      <div class="admin-field"><label>Correo</label><input id="adm-login-email" type="email" placeholder="tucorreo@negocio.com"></div>
+      <div class="admin-field"><label>Contraseña</label><input id="adm-login-pass" type="password" placeholder="••••••••"></div>
+    </div>
+    <div id="admin-login-local" class="space-y-3 hidden">
+      <div class="admin-field"><label>PIN de administrador</label><input id="adm-login-pin" type="password" inputmode="numeric" placeholder="Ej. 1234"></div>
+    </div>
+    <p id="admin-login-error" class="text-xs text-red-500 mt-2 h-4"></p>
+    <button onclick="adminLogin()" class="w-full brand-grad text-white font-bold rounded-2xl py-3 mt-2">Ingresar</button>
+  </div>
+</div>
+
+<!-- ============ MODAL: PANEL ADMIN ============ -->
+<div id="admin-modal" class="fixed inset-0 bg-black/60 hidden items-end sm:items-center justify-center z-40">
+  <div class="glass w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl modal-scroll relative">
+    <div class="sticky top-0 glass flex items-center justify-between px-5 py-4 border-b border-amber-100 z-10">
+      <h2 class="font-bold text-gray-800">⚙️ Panel del negocio</h2>
+      <div class="flex items-center gap-3">
+        <button onclick="adminLogout()" class="text-xs font-semibold text-gray-400 hover:text-red-500">Salir</button>
+        <button onclick="closeModal('admin-modal')" class="text-gray-400 hover:text-red-500 text-xl">✕</button>
+      </div>
+    </div>
+
+    <div class="px-5 pb-28">
+      <p id="admin-msg" class="text-xs mt-3 h-4"></p>
+
+      <div class="admin-section-title">Información del negocio</div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="admin-field col-span-2"><label>Nombre del negocio</label><input id="adm-name"></div>
+        <div class="admin-field col-span-2"><label>Frase / especialidad</label><input id="adm-tagline"></div>
+        <div class="admin-field col-span-2"><label>Insignia (opcional, ej. 🏆 Campeón 2024)</label><input id="adm-badge"></div>
+        <div class="admin-field"><label>Color de marca</label><input id="adm-color" type="color"></div>
+        <div class="admin-field"><label>Emoji del avatar</label><input id="adm-avatar-emoji" maxlength="4"></div>
+        <div class="admin-field col-span-2"><label>Foto de avatar (URL, opcional)</label><input id="adm-avatar-image" placeholder="https://..."></div>
+        <div class="admin-field col-span-2"><label>Foto de portada (URL, opcional)</label><input id="adm-hero-image" placeholder="https://..."></div>
+        <div class="admin-field col-span-2"><label>Teléfono (con indicativo, ej. +573001234567)</label><input id="adm-phone"></div>
+        <div class="admin-field col-span-2"><label>WhatsApp (solo números, ej. 573001234567)</label><input id="adm-whatsapp"></div>
+        <div class="admin-field col-span-2"><label>Dirección / ubicación</label><input id="adm-address"></div>
+        <div class="admin-field col-span-2"><label>Instagram (link completo)</label><input id="adm-instagram"></div>
+        <div class="admin-field"><label>Costo de domicilio</label><input id="adm-delivery" type="number" min="0" step="500"></div>
+        <div class="admin-field"><label>Símbolo de moneda</label><input id="adm-currency"></div>
+        <div class="admin-field"><label>Cobro de caja/empaque (por unidad pedida)</label><input id="adm-packaging-fee" type="number" min="0" step="100"></div>
+        <div class="admin-field"><label>Nombre de ese cobro</label><input id="adm-packaging-label" placeholder="Ej. Caja para llevar"></div>
+      </div>
+
+      <div class="admin-section-title">Horario de atención</div>
+      <div id="adm-hours-list" class="space-y-2"></div>
+      <button onclick="admAddHour()" class="mt-2 text-xs font-semibold brand-text">+ Agregar horario</button>
+
+      <div class="admin-section-title">Métodos de pago</div>
+      <div id="adm-payments-list" class="space-y-2"></div>
+      <button onclick="admAddPayment()" class="mt-2 text-xs font-semibold brand-text">+ Agregar método de pago</button>
+
+      <div class="admin-section-title">Galería de platos</div>
+      <div id="adm-gallery-list" class="grid grid-cols-2 gap-2"></div>
+      <button onclick="admAddGalleryItem()" class="mt-2 text-xs font-semibold brand-text">+ Agregar foto a la galería</button>
+
+      <div class="admin-section-title">Menú — categorías y productos</div>
+      <div id="adm-menu-list" class="space-y-4"></div>
+      <div class="flex gap-2 mt-3">
+        <input id="adm-new-cat" placeholder="Nombre de la nueva categoría (ej. Bebidas)" class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm">
+        <button onclick="admAddCategory()" class="brand-bg text-white text-xs font-bold px-4 rounded-xl">+ Categoría</button>
+      </div>
+
+      <div class="admin-section-title">Ficha creada por (opcional)</div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="admin-field col-span-2"><label>Nombre de tu agencia / marca</label><input id="adm-agency-name" placeholder="Ej. Tarjetas Digitales"></div>
+        <div class="admin-field col-span-2"><label>Link de contacto de tu agencia</label><input id="adm-agency-url" placeholder="https://wa.me/..."></div>
+        <div class="admin-field col-span-2" id="adm-pin-wrap"><label>PIN de administrador (modo demo)</label><input id="adm-pin" inputmode="numeric"></div>
+      </div>
+    </div>
+
+    <div class="sticky bottom-0 glass border-t border-amber-100 p-4">
+      <button onclick="saveAdmin()" class="w-full brand-grad text-white font-bold rounded-2xl py-3.5">💾 Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================
-// CONFIGURACIÓN — datos reales del negocio, editar aquí
+// SEMILLA — datos por defecto de este negocio. Si conectas Firebase (ver
+// ADMIN-SETUP.md), estos datos solo se usan la primera vez; luego el dueño
+// los edita desde el Panel del negocio y quedan guardados en la nube.
 // ============================================
-const CONFIG = {
+const DEFAULT_CONFIG = {
   restaurantName: "Burger Master La Cruz",
   tagline: "Hamburguesas artesanales, tacos y burritos",
+  badgeText: "🏆 CAMPEÓN BURGER MASTER 2024",
+  brandColor: "#e8730c",
+  brandColorDark: "#9a3412",
+  avatarEmoji: "🍔",
+  avatarImage: "",
+  heroImage: "",
   phoneTel: "+573004214620",
   whatsappNumber: "573004214620",
   address: "Al lado de la Iglesia Católica, La Cruz, Nariño",
-  mapsUrl: "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent("Iglesia Católica, La Cruz, Nariño, Colombia"),
   instagramUrl: "https://instagram.com/",
-  // Placeholder — confirmar costo real de domicilio con el negocio antes de publicar
   deliveryFee: 5000,
   currency: "$",
+  packagingFee: 1000,
+  packagingLabel: "Caja para llevar",
+  adminPin: "1234",
+  ownerEmail: "",
   hours: [
     { day: "Martes a domingo", time: "5:00 pm – 11:00 pm" },
     { day: "Lunes", time: "Cerrado" }
   ],
   gallery: [
-    { emoji: "🍔", label: "Clásica Doble", bg: "#ffe8b8" },
-    { emoji: "🌮", label: "Tacos de Birria", bg: "#ffe0d0" },
-    { emoji: "🌯", label: "Burrito Mixto", bg: "#fdf0c8" },
-    { emoji: "🍟", label: "Salchipapa Familiar", bg: "#fff0d6" }
+    { emoji: "🍔", label: "Clásica Doble", bg: "#ffe8b8", image: "" },
+    { emoji: "🌮", label: "Tacos de Birria", bg: "#ffe0d0", image: "" },
+    { emoji: "🌯", label: "Burrito Mixto", bg: "#fdf0c8", image: "" },
+    { emoji: "🍟", label: "Salchipapa Familiar", bg: "#fff0d6", image: "" }
   ],
-  // Placeholder — pedir al negocio sus cuentas reales antes de publicar
-  paymentAccounts: {
-    nequi: { label: "Nequi", number: "300414620", note: "" },
-    bancolombia: { label: "Bancolombia", number: "(pendiente: cuenta Bancolombia del negocio)", note: "" },
-    llave: { label: "Llave", number: "(pendiente: Llave del negocio)", note: "" }
-  }
+  paymentMethods: [
+    { id: "efectivo", label: "Efectivo contraentrega", number: "", note: "", isCash: true },
+    { id: "nequi", label: "Nequi", number: "300414620", note: "" }
+  ],
+  agencyName: "",
+  agencyUrl: ""
 };
 
-const MENU = {
+const DEFAULT_MENU = {
   "Hamburguesas": [
-    { id: 1, name: "Clásica", desc: "Pan artesanal, carne artesanal rellena de queso, lechuga, cebolla caramelizada, salsa BBQ, mostaza", price: 20000, emoji: "🍔", bg: "#ffe8b8" },
-    { id: 2, name: "American Burger", desc: "Pan artesanal, salsa BigMac, pepinillos (opcional jalapeños), queso cheddar, carne artesanal, tocineta ahumada, aros de cebolla grille", price: 21000, emoji: "🍔", bg: "#ffe8b8" },
-    { id: 3, name: "Clásica Doble", desc: "Pan artesanal, doble carne artesanal rellena de doble queso, huevo frito, lechuga, cebolla caramelizada, salsa BBQ, mostaza", price: 24000, emoji: "🍔", bg: "#ffe8b8" },
-    { id: 4, name: "Mexicana", desc: "Pan artesanal, carne artesanal, lechuga, mayonesa de la casa, aguacate, pico de gallo, maicitos, salsa de mango habanero, queso mozzarella (opcional jalapeños)", price: 21000, emoji: "🍔", bg: "#ffe8b8" },
-    { id: 5, name: "Chapiburguer", desc: "Pan artesanal, tomate, mayonesa de ajo, mostaza, aros de cebolla apanados, tocineta ahumada, mermelada de cebolla en salsa de maracuyá, carne artesanal, queso mozzarella", price: 24000, emoji: "🍔", bg: "#ffe8b8" }
+    { id: "h1", name: "Clásica", desc: "Pan artesanal, carne artesanal rellena de queso, lechuga, cebolla caramelizada, salsa BBQ, mostaza", price: 20000, emoji: "🍔", bg: "#ffe8b8", image: "" },
+    { id: "h2", name: "American Burger", desc: "Pan artesanal, salsa BigMac, pepinillos (opcional jalapeños), queso cheddar, carne artesanal, tocineta ahumada, aros de cebolla grille", price: 21000, emoji: "🍔", bg: "#ffe8b8", image: "" },
+    { id: "h3", name: "Clásica Doble", desc: "Pan artesanal, doble carne artesanal rellena de doble queso, huevo frito, lechuga, cebolla caramelizada, salsa BBQ, mostaza", price: 24000, emoji: "🍔", bg: "#ffe8b8", image: "" },
+    { id: "h4", name: "Mexicana", desc: "Pan artesanal, carne artesanal, lechuga, mayonesa de la casa, aguacate, pico de gallo, maicitos, salsa de mango habanero, queso mozzarella (opcional jalapeños)", price: 21000, emoji: "🍔", bg: "#ffe8b8", image: "" },
+    { id: "h5", name: "Chapiburguer", desc: "Pan artesanal, tomate, mayonesa de ajo, mostaza, aros de cebolla apanados, tocineta ahumada, mermelada de cebolla en salsa de maracuyá, carne artesanal, queso mozzarella", price: 24000, emoji: "🍔", bg: "#ffe8b8", image: "" }
   ],
   "Alitas": [
-    { id: 6, name: "Salsa Teriyaki", desc: "Alitas fritas, salsa artesanal, papa amarilla frita", price: 20000, emoji: "🍗", bg: "#ffe0d0" },
-    { id: 7, name: "Salsa Mango Picante", desc: "Alitas fritas, salsa artesanal, papa amarilla frita", price: 20000, emoji: "🍗", bg: "#ffe0d0" }
+    { id: "a1", name: "Salsa Teriyaki", desc: "Alitas fritas, salsa artesanal, papa amarilla frita", price: 20000, emoji: "🍗", bg: "#ffe0d0", image: "" },
+    { id: "a2", name: "Salsa Mango Picante", desc: "Alitas fritas, salsa artesanal, papa amarilla frita", price: 20000, emoji: "🍗", bg: "#ffe0d0", image: "" }
   ],
   "Sandwich": [
-    { id: 8, name: "Peruano (frío)", desc: "Pan artesanal, pollo en mayonesa de la casa, lechuga, queso, cebolla morada, aguacate, papas fritas", price: 18000, emoji: "🥪", bg: "#fdf0c8" }
+    { id: "s1", name: "Peruano (frío)", desc: "Pan artesanal, pollo en mayonesa de la casa, lechuga, queso, cebolla morada, aguacate, papas fritas", price: 18000, emoji: "🥪", bg: "#fdf0c8", image: "" }
   ],
   "Papas fritas": [
-    { id: 9, name: "Mexicanas", desc: "Papas fritas, carne boloñesa, pollo en mostaza y finas hierbas, mayonesa casera, queso, pico de gallo", price: 22000, emoji: "🍟", bg: "#fff0d6" },
-    { id: 10, name: "Salchipapa Familiar (4 personas)", desc: "3 tipos de papa, carne boloñesa, pollo desmechado en mostaza y tomillo, mayonesa casera, salchicha ranchera, tocineta, pico de gallo, queso", price: 65000, emoji: "🍟", bg: "#fff0d6" }
+    { id: "p1", name: "Mexicanas", desc: "Papas fritas, carne boloñesa, pollo en mostaza y finas hierbas, mayonesa casera, queso, pico de gallo", price: 22000, emoji: "🍟", bg: "#fff0d6", image: "" },
+    { id: "p2", name: "Salchipapa Familiar (4 personas)", desc: "3 tipos de papa, carne boloñesa, pollo desmechado en mostaza y tomillo, mayonesa casera, salchicha ranchera, tocineta, pico de gallo, queso", price: 65000, emoji: "🍟", bg: "#fff0d6", image: "" }
   ],
   "Tacos": [
-    { id: 11, name: "Tacos de Birria", desc: "Tortillas de maíz importadas de México, carne de res desmechada, queso doble crema, cebolla, cilantro fresco, acompañado de caldo de res (opcional jalapeños)", price: 23000, emoji: "🌮", bg: "#ffe0d0" }
+    { id: "t1", name: "Tacos de Birria", desc: "Tortillas de maíz importadas de México, carne de res desmechada, queso doble crema, cebolla, cilantro fresco, acompañado de caldo de res (opcional jalapeños)", price: 23000, emoji: "🌮", bg: "#ffe0d0", image: "" }
   ],
   "Burritos": [
-    { id: 12, name: "Carne", desc: "Carne a la boloñesa, queso, lechuga, tortilla de maíz, papas fritas", price: 20000, emoji: "🌯", bg: "#fdf0c8" },
-    { id: 13, name: "Pollo", desc: "Pollo en mostaza salteado al wok y finas hierbas, queso, lechuga, tortilla de maíz, papas fritas", price: 20000, emoji: "🌯", bg: "#fdf0c8" },
-    { id: 14, name: "Mixto", desc: "Carne a la boloñesa, pollo en mostaza salteado al wok y finas hierbas, queso, lechuga, tortilla de maíz, papas fritas", price: 22000, emoji: "🌯", bg: "#fdf0c8" }
+    { id: "b1", name: "Carne", desc: "Carne a la boloñesa, queso, lechuga, tortilla de maíz, papas fritas", price: 20000, emoji: "🌯", bg: "#fdf0c8", image: "" },
+    { id: "b2", name: "Pollo", desc: "Pollo en mostaza salteado al wok y finas hierbas, queso, lechuga, tortilla de maíz, papas fritas", price: 20000, emoji: "🌯", bg: "#fdf0c8", image: "" },
+    { id: "b3", name: "Mixto", desc: "Carne a la boloñesa, pollo en mostaza salteado al wok y finas hierbas, queso, lechuga, tortilla de maíz, papas fritas", price: 22000, emoji: "🌯", bg: "#fdf0c8", image: "" }
   ],
   "Adiciones": [
-    { id: 15, name: "Adición de papitas", desc: "Porción extra de papas fritas", price: 6000, emoji: "➕", bg: "#f2f2f2" },
-    { id: 16, name: "Adición de aritos de cebolla", desc: "Porción extra de aros de cebolla", price: 6000, emoji: "➕", bg: "#f2f2f2" }
+    { id: "ad1", name: "Adición de papitas", desc: "Porción extra de papas fritas", price: 6000, emoji: "➕", bg: "#f2f2f2", image: "" },
+    { id: "ad2", name: "Adición de aritos de cebolla", desc: "Porción extra de aros de cebolla", price: 6000, emoji: "➕", bg: "#f2f2f2", image: "" }
   ]
 };
 
+// ============================================
+// CONEXIÓN A LA NUBE (opcional) — ver ADMIN-SETUP.md para activarla.
+// Mientras FIREBASE_CONFIG tenga los valores de ejemplo, la tarjeta
+// funciona en "modo demo" con guardado local en el navegador.
+// ============================================
+const FIREBASE_CONFIG = {
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_PROYECTO.firebaseapp.com",
+  projectId: "TU_PROYECTO",
+  storageBucket: "TU_PROYECTO.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId: "TU_APP_ID"
+};
+// Identificador único de este negocio dentro de tu proyecto Firebase.
+// Cámbialo por cada cliente nuevo (minúsculas, sin espacios).
+const RESTAURANT_ID = "burger-master-la-cruz";
+
+const LS_KEY = "tarjeta_" + RESTAURANT_ID;
+const firebaseEnabled = !!(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey.indexOf("TU_") !== 0);
+
+let CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+let MENU = JSON.parse(JSON.stringify(DEFAULT_MENU));
 let cart = {};
+let DRAFT = null;
+let db, auth;
 
-function fmt(n){ return CONFIG.currency + Math.round(n).toLocaleString('es-CO'); }
+if (firebaseEnabled){
+  firebase.initializeApp(FIREBASE_CONFIG);
+  db = firebase.firestore();
+  auth = firebase.auth();
+} else {
+  document.getElementById("demo-banner").classList.remove("hidden");
+  const saved = localStorage.getItem(LS_KEY);
+  if (saved){
+    try {
+      const data = JSON.parse(saved);
+      if (data.config) CONFIG = data.config;
+      if (data.menu) MENU = data.menu;
+    } catch(e){ /* ignora datos corruptos */ }
+  }
+}
 
+// ---------- Utilidades ----------
+function esc(str){
+  return String(str ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+function fmt(n){ return (CONFIG.currency||"$") + Math.round(n).toLocaleString('es-CO'); }
 function findItem(id){
   for (const cat in MENU){
     const found = MENU[cat].find(i => i.id === id);
     if (found) return found;
   }
+}
+function newId(){ return "id" + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function derivedMapsUrl(){
+  return CONFIG.mapsUrl || ("https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(CONFIG.address || CONFIG.restaurantName));
 }
 
 // ---------- Modales genéricos ----------
@@ -280,14 +451,44 @@ function closeModal(id){
   document.getElementById(id).classList.remove('flex');
 }
 
+// ---------- Marca / color ----------
+function applyBrandColor(){
+  document.documentElement.style.setProperty('--brand', CONFIG.brandColor || '#e8730c');
+  document.documentElement.style.setProperty('--brand-dark', CONFIG.brandColorDark || '#9a3412');
+}
+
 // ---------- Header dinámico ----------
 function initHeader(){
   document.getElementById('rname').textContent = CONFIG.restaurantName;
   document.getElementById('rtagline').textContent = CONFIG.tagline;
+  document.getElementById('rlocbadge').textContent = "📍 " + (CONFIG.address || "");
+  document.getElementById('rlocation').textContent = "📍 " + (CONFIG.address || "");
   document.getElementById('call-link').href = 'tel:' + CONFIG.phoneTel;
-  document.getElementById('maps-link').href = CONFIG.mapsUrl;
-  document.getElementById('ig-link').href = CONFIG.instagramUrl;
+  document.getElementById('maps-link').href = derivedMapsUrl();
+  document.getElementById('ig-link').href = CONFIG.instagramUrl || '#';
   document.getElementById('wa-link').href = 'https://wa.me/' + CONFIG.whatsappNumber + '?text=' + encodeURIComponent('Hola ' + CONFIG.restaurantName + ', quiero hacer un pedido');
+
+  const badge = document.getElementById('rbadge');
+  if (CONFIG.badgeText){ badge.innerHTML = esc(CONFIG.badgeText).replace(/\n/g,'<br>'); badge.classList.remove('hidden'); }
+  else { badge.classList.add('hidden'); }
+
+  const avatar = document.getElementById('ravatar');
+  if (CONFIG.avatarImage){ avatar.style.backgroundImage = `url('${CONFIG.avatarImage}')`; avatar.textContent = ''; }
+  else { avatar.style.backgroundImage = ''; avatar.textContent = CONFIG.avatarEmoji || '🍔'; }
+
+  const hero = document.getElementById('hero');
+  const heroPattern = document.getElementById('hero-pattern');
+  if (CONFIG.heroImage){ hero.style.backgroundImage = `url('${CONFIG.heroImage}')`; heroPattern.classList.add('hidden'); }
+  else { hero.style.backgroundImage = ''; heroPattern.classList.remove('hidden'); }
+
+  const credit = document.getElementById('footer-credit');
+  if (CONFIG.agencyName){
+    credit.innerHTML = CONFIG.agencyUrl
+      ? `Tarjeta digital creada por <a href="${esc(CONFIG.agencyUrl)}" target="_blank" class="underline">${esc(CONFIG.agencyName)}</a>`
+      : `Tarjeta digital creada por ${esc(CONFIG.agencyName)}`;
+  } else {
+    credit.textContent = 'Tarjeta digital creada para tu negocio';
+  }
 }
 
 // ---------- Menú ----------
@@ -295,33 +496,39 @@ function renderTabs(){
   const tabs = document.getElementById('menu-tabs');
   const cats = Object.keys(MENU);
   tabs.innerHTML = cats.map((c,i) =>
-    `<button class="flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border ${i===0 ? 'bg-amber-500 text-white border-amber-500' : 'text-gray-500 border-gray-200'}" data-cat="${c}" onclick="scrollToCat('${c}', this)">${c}</button>`
+    `<button class="flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border ${i===0 ? 'brand-bg text-white brand-border' : 'text-gray-500 border-gray-200'}" data-cat="${esc(c)}" onclick="scrollToCat('${esc(c).replace(/'/g,"\\'")}', this)">${esc(c)}</button>`
   ).join('');
 }
 function scrollToCat(cat, btn){
   document.querySelectorAll('#menu-tabs button').forEach(b=>{
     b.className = "flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border text-gray-500 border-gray-200";
   });
-  btn.className = "flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border bg-amber-500 text-white border-amber-500";
-  document.getElementById('sec-'+cat.replace(/\s+/g,'-')).scrollIntoView({behavior:'smooth', block:'start'});
+  btn.className = "flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border brand-bg text-white brand-border";
+  const el = document.getElementById('sec-'+slugify(cat));
+  if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
 }
+function slugify(s){ return String(s).replace(/\s+/g,'-').replace(/[^\w-]/g,''); }
+
 function renderMenu(){
   const wrap = document.getElementById('menu-list');
   wrap.innerHTML = '';
   for (const cat in MENU){
     const section = document.createElement('div');
-    section.id = 'sec-' + cat.replace(/\s+/g,'-');
+    section.id = 'sec-' + slugify(cat);
     section.className = 'mt-4';
-    section.innerHTML = `<h3 class="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-2">${cat}</h3>`;
+    section.innerHTML = `<h3 class="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-2">${esc(cat)}</h3>`;
     MENU[cat].forEach(item => {
       const row = document.createElement('div');
       row.className = 'flex items-center gap-3 border border-gray-100 rounded-2xl p-3 mb-2';
+      const thumb = item.image
+        ? `<img src="${esc(item.image)}" class="w-14 h-14 rounded-xl object-cover flex-shrink-0" alt="${esc(item.name)}">`
+        : `<div class="w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style="background:${esc(item.bg||'#f2f2f2')}">${item.emoji||'🍽️'}</div>`;
       row.innerHTML = `
-        <div class="w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style="background:${item.bg}">${item.emoji}</div>
+        ${thumb}
         <div class="flex-1 min-w-0">
-          <div class="font-semibold text-sm text-gray-800">${item.name}</div>
-          <div class="text-xs text-gray-400">${item.desc}</div>
-          <div class="text-sm font-bold text-amber-700 mt-1">${fmt(item.price)}</div>
+          <div class="font-semibold text-sm text-gray-800">${esc(item.name)}</div>
+          <div class="text-xs text-gray-400">${esc(item.desc)}</div>
+          <div class="text-sm font-bold brand-text mt-1">${fmt(item.price)}</div>
         </div>
         <div id="mctrl-${item.id}"></div>
       `;
@@ -343,13 +550,13 @@ function renderControl(id){
   if (!el) return;
   const qty = cart[id] || 0;
   if (qty === 0){
-    el.innerHTML = `<button onclick="addItem(${id})" class="bg-amber-500 text-white text-xs font-bold px-3 py-2 rounded-xl">Agregar</button>`;
+    el.innerHTML = `<button onclick="addItem('${id}')" class="brand-bg text-white text-xs font-bold px-3 py-2 rounded-xl">Agregar</button>`;
   } else {
     el.innerHTML = `
       <div class="flex items-center gap-2">
-        <button onclick="removeItem(${id})" class="w-7 h-7 rounded-lg border border-gray-200 font-bold">−</button>
+        <button onclick="removeItem('${id}')" class="w-7 h-7 rounded-lg border border-gray-200 font-bold">−</button>
         <span class="text-sm font-bold w-4 text-center">${qty}</span>
-        <button onclick="addItem(${id})" class="w-7 h-7 rounded-lg border border-gray-200 font-bold">+</button>
+        <button onclick="addItem('${id}')" class="w-7 h-7 rounded-lg border border-gray-200 font-bold">+</button>
       </div>`;
   }
 }
@@ -363,7 +570,7 @@ function removeItem(id){
   updateCartBar();
 }
 function cartCount(){ return Object.values(cart).reduce((a,b)=>a+b,0); }
-function cartSubtotal(){ return Object.entries(cart).reduce((s,[id,qty]) => s + findItem(Number(id)).price*qty, 0); }
+function cartSubtotal(){ return Object.entries(cart).reduce((s,[id,qty]) => { const it = findItem(id); return it ? s + it.price*qty : s; }, 0); }
 
 function updateCartBar(){
   const wrap = document.getElementById('menu-cart-bar-wrap');
@@ -380,7 +587,13 @@ function updateCartBar(){
 // ---------- Carrito / checkout ----------
 function openCartModal(){
   openModal('cart-modal');
+  renderPaymentOptions();
   renderCart();
+}
+function renderPaymentOptions(){
+  const sel = document.getElementById('cf-payment');
+  const methods = CONFIG.paymentMethods && CONFIG.paymentMethods.length ? CONFIG.paymentMethods : [{id:'efectivo',label:'Efectivo contraentrega',isCash:true}];
+  sel.innerHTML = methods.map(m => `<option value="${esc(m.id)}">${esc(m.label)}</option>`).join('');
 }
 function renderCart(){
   const lines = document.getElementById('cart-lines');
@@ -401,9 +614,10 @@ function renderCart(){
   form.classList.remove('hidden');
 
   lines.innerHTML = entries.map(([id,qty]) => {
-    const item = findItem(Number(id));
+    const item = findItem(id);
+    if (!item) return '';
     return `<div class="flex justify-between text-sm py-2 border-b border-gray-100">
-      <div><div class="font-medium">${item.emoji} ${item.name} × ${qty}</div><div class="text-xs text-gray-400">${fmt(item.price)} c/u</div></div>
+      <div><div class="font-medium">${item.emoji||'🍽️'} ${esc(item.name)} × ${qty}</div><div class="text-xs text-gray-400">${fmt(item.price)} c/u</div></div>
       <div class="font-bold">${fmt(item.price*qty)}</div>
     </div>`;
   }).join('');
@@ -411,38 +625,54 @@ function renderCart(){
   updateCartTotals();
   updatePaymentNote();
 }
+function packagingTotal(){ return cartCount() * (CONFIG.packagingFee||0); }
 function updateCartTotals(){
   const deliveryType = document.getElementById('cf-delivery').value;
   const addrWrap = document.getElementById('cf-address-wrap');
   addrWrap.style.display = deliveryType === 'delivery' ? 'block' : 'none';
-  const fee = deliveryType === 'delivery' ? CONFIG.deliveryFee : 0;
+  const fee = deliveryType === 'delivery' ? (CONFIG.deliveryFee||0) : 0;
   const subtotal = cartSubtotal();
+  const packaging = packagingTotal();
+  const packagingRow = document.getElementById('cart-packaging-row');
+  if (packaging > 0){
+    packagingRow.classList.remove('hidden');
+    document.getElementById('cart-packaging-label').textContent = `${CONFIG.packagingLabel||'Empaque'} (${cartCount()} x ${fmt(CONFIG.packagingFee||0)})`;
+    document.getElementById('cart-packaging').textContent = fmt(packaging);
+  } else {
+    packagingRow.classList.add('hidden');
+  }
   document.getElementById('cart-subtotal').textContent = fmt(subtotal);
   document.getElementById('cart-delivery').textContent = fee === 0 ? 'Gratis' : fmt(fee);
-  document.getElementById('cart-total').textContent = fmt(subtotal + fee);
+  document.getElementById('cart-total').textContent = fmt(subtotal + packaging + fee);
+}
+function findPaymentMethod(id){
+  const methods = CONFIG.paymentMethods || [];
+  return methods.find(m => m.id === id);
 }
 function updatePaymentNote(){
-  const method = document.getElementById('cf-payment').value;
+  const id = document.getElementById('cf-payment').value;
   const note = document.getElementById('cf-payment-note');
-  if (method === 'efectivo'){ note.classList.add('hidden'); note.innerHTML=''; return; }
-  const acc = CONFIG.paymentAccounts[method];
+  const method = findPaymentMethod(id);
+  if (!method || method.isCash){ note.classList.add('hidden'); note.innerHTML=''; return; }
   note.classList.remove('hidden');
-  note.innerHTML = `Pagas a <b>${acc.label}</b>: ${acc.number}. ${acc.note ? acc.note + '. ' : ''}Envía el comprobante por el mismo chat.`;
+  note.innerHTML = `Pagas a <b>${esc(method.label)}</b>: ${esc(method.number)}. ${method.note ? esc(method.note) + '. ' : ''}Envía el comprobante por el mismo chat.`;
 }
 
 function sendOrderToWhatsApp(){
   const name = document.getElementById('cf-name').value.trim();
   const deliveryType = document.getElementById('cf-delivery').value;
   const address = document.getElementById('cf-address').value.trim();
-  const paymentMethod = document.getElementById('cf-payment').value;
+  const paymentId = document.getElementById('cf-payment').value;
+  const method = findPaymentMethod(paymentId);
 
   if (!name){ alert('Por favor ingresa tu nombre.'); return; }
   if (deliveryType === 'delivery' && !address){ alert('Por favor ingresa la dirección de entrega.'); return; }
 
   const entries = Object.entries(cart);
   const subtotal = cartSubtotal();
-  const fee = deliveryType === 'delivery' ? CONFIG.deliveryFee : 0;
-  const total = subtotal + fee;
+  const packaging = packagingTotal();
+  const fee = deliveryType === 'delivery' ? (CONFIG.deliveryFee||0) : 0;
+  const total = subtotal + packaging + fee;
 
   let msg = `🍔 *Nuevo pedido - ${CONFIG.restaurantName}*\n\n`;
   msg += `Cliente: ${name}\n`;
@@ -450,16 +680,18 @@ function sendOrderToWhatsApp(){
   if (deliveryType === 'delivery') msg += `Dirección: ${address}\n`;
   msg += `\n*Pedido:*\n`;
   entries.forEach(([id,qty]) => {
-    const item = findItem(Number(id));
+    const item = findItem(id);
+    if (!item) return;
     msg += `• ${qty}x ${item.name} - ${fmt(item.price*qty)}\n`;
   });
-  msg += `\nSubtotal: ${fmt(subtotal)}\nDelivery: ${fee===0?'Gratis':fmt(fee)}\n*Total: ${fmt(total)}*\n\n`;
+  msg += `\nSubtotal: ${fmt(subtotal)}\n`;
+  if (packaging > 0) msg += `${CONFIG.packagingLabel||'Empaque'} (${cartCount()} x ${fmt(CONFIG.packagingFee||0)}): ${fmt(packaging)}\n`;
+  msg += `Delivery: ${fee===0?'Gratis':fmt(fee)}\n*Total: ${fmt(total)}*\n\n`;
 
-  if (paymentMethod === 'efectivo'){
-    msg += `💵 *Pago: Efectivo contraentrega*\n`;
+  if (!method || method.isCash){
+    msg += `💵 *Pago: ${method ? method.label : 'Efectivo contraentrega'}*\n`;
   } else {
-    const acc = CONFIG.paymentAccounts[paymentMethod];
-    msg += `💳 *Pago: ${acc.label}*\n${acc.label}: ${acc.number}\n_Enviaré el comprobante por este mismo chat._\n`;
+    msg += `💳 *Pago: ${method.label}*\n${method.label}: ${method.number}\n_Enviaré el comprobante por este mismo chat._\n`;
   }
   msg += `\n_Pedido generado desde la tarjeta digital_`;
 
@@ -470,20 +702,21 @@ function sendOrderToWhatsApp(){
 // ---------- Horario ----------
 function renderHours(){
   const el = document.getElementById('hours-list');
-  el.innerHTML = CONFIG.hours.map(h => `
+  el.innerHTML = (CONFIG.hours||[]).map(h => `
     <div class="flex justify-between border-b border-gray-100 pb-2">
-      <span class="text-gray-500">${h.day}</span>
-      <span class="font-semibold text-gray-800">${h.time}</span>
+      <span class="text-gray-500">${esc(h.day)}</span>
+      <span class="font-semibold text-gray-800">${esc(h.time)}</span>
     </div>`).join('');
 }
 
 // ---------- Galería ----------
 function renderGallery(){
   const el = document.getElementById('gallery-grid');
-  el.innerHTML = CONFIG.gallery.map(g => `
-    <div class="aspect-square rounded-2xl flex flex-col items-center justify-center text-4xl" style="background:${g.bg}">
-      ${g.emoji}
-      <span class="text-[11px] font-medium text-gray-600 mt-1 text-center px-1">${g.label}</span>
+  el.innerHTML = (CONFIG.gallery||[]).map(g => g.image
+    ? `<div class="aspect-square rounded-2xl overflow-hidden"><img src="${esc(g.image)}" class="w-full h-full object-cover" alt="${esc(g.label)}"></div>`
+    : `<div class="aspect-square rounded-2xl flex flex-col items-center justify-center text-4xl" style="background:${esc(g.bg||'#f2f2f2')}">
+      ${g.emoji||'🍽️'}
+      <span class="text-[11px] font-medium text-gray-600 mt-1 text-center px-1">${esc(g.label)}</span>
     </div>`).join('');
 }
 
@@ -519,12 +752,303 @@ function downloadVCard(){
   URL.revokeObjectURL(url);
 }
 
-// ---------- Init ----------
-initHeader();
-renderTabs();
-renderMenu();
-renderHours();
-renderGallery();
+// ---------- Render general ----------
+function renderAll(){
+  applyBrandColor();
+  initHeader();
+  renderTabs();
+  renderMenu();
+  renderHours();
+  renderGallery();
+}
+
+// ============================================
+// PANEL DE ADMINISTRACIÓN
+// ============================================
+function openAdminEntry(){
+  if (firebaseEnabled && auth.currentUser && auth.currentUser.email === CONFIG.ownerEmail && CONFIG.ownerEmail){
+    openAdmin();
+    return;
+  }
+  document.getElementById('admin-login-cloud').classList.toggle('hidden', !firebaseEnabled);
+  document.getElementById('admin-login-local').classList.toggle('hidden', firebaseEnabled);
+  document.getElementById('adm-pin-wrap').classList.toggle('hidden', firebaseEnabled);
+  document.getElementById('admin-login-error').textContent = '';
+  openModal('admin-login-modal');
+}
+
+async function adminLogin(){
+  const errEl = document.getElementById('admin-login-error');
+  errEl.textContent = '';
+  if (firebaseEnabled){
+    const email = document.getElementById('adm-login-email').value.trim();
+    const pass = document.getElementById('adm-login-pass').value;
+    try {
+      await auth.signInWithEmailAndPassword(email, pass);
+      closeModal('admin-login-modal');
+      openAdmin();
+    } catch(err){
+      errEl.textContent = 'Correo o contraseña incorrectos.';
+    }
+  } else {
+    const pin = document.getElementById('adm-login-pin').value;
+    if (pin === (CONFIG.adminPin || '1234')){
+      closeModal('admin-login-modal');
+      openAdmin();
+    } else {
+      errEl.textContent = 'PIN incorrecto.';
+    }
+  }
+}
+
+function adminLogout(){
+  if (firebaseEnabled && auth.currentUser) auth.signOut();
+  closeModal('admin-modal');
+}
+
+function openAdmin(){
+  DRAFT = JSON.parse(JSON.stringify({ config: CONFIG, menu: MENU }));
+  document.getElementById('adm-pin-wrap').classList.toggle('hidden', firebaseEnabled);
+  renderAdminForm();
+  openModal('admin-modal');
+}
+
+function renderAdminForm(){
+  const c = DRAFT.config;
+  document.getElementById('adm-name').value = c.restaurantName || '';
+  document.getElementById('adm-tagline').value = c.tagline || '';
+  document.getElementById('adm-badge').value = c.badgeText || '';
+  document.getElementById('adm-color').value = c.brandColor || '#e8730c';
+  document.getElementById('adm-avatar-emoji').value = c.avatarEmoji || '';
+  document.getElementById('adm-avatar-image').value = c.avatarImage || '';
+  document.getElementById('adm-hero-image').value = c.heroImage || '';
+  document.getElementById('adm-phone').value = c.phoneTel || '';
+  document.getElementById('adm-whatsapp').value = c.whatsappNumber || '';
+  document.getElementById('adm-address').value = c.address || '';
+  document.getElementById('adm-instagram').value = c.instagramUrl || '';
+  document.getElementById('adm-delivery').value = c.deliveryFee || 0;
+  document.getElementById('adm-currency').value = c.currency || '$';
+  document.getElementById('adm-packaging-fee').value = c.packagingFee || 0;
+  document.getElementById('adm-packaging-label').value = c.packagingLabel || 'Caja para llevar';
+  document.getElementById('adm-agency-name').value = c.agencyName || '';
+  document.getElementById('adm-agency-url').value = c.agencyUrl || '';
+  document.getElementById('adm-pin').value = c.adminPin || '1234';
+
+  [
+    ['adm-name','restaurantName'], ['adm-tagline','tagline'], ['adm-badge','badgeText'],
+    ['adm-avatar-emoji','avatarEmoji'], ['adm-avatar-image','avatarImage'], ['adm-hero-image','heroImage'],
+    ['adm-phone','phoneTel'], ['adm-whatsapp','whatsappNumber'], ['adm-address','address'],
+    ['adm-instagram','instagramUrl'], ['adm-currency','currency'], ['adm-agency-name','agencyName'],
+    ['adm-agency-url','agencyUrl'], ['adm-pin','adminPin'], ['adm-packaging-label','packagingLabel']
+  ].forEach(([elId, field]) => {
+    document.getElementById(elId).oninput = e => { DRAFT.config[field] = e.target.value; };
+  });
+  document.getElementById('adm-color').oninput = e => { DRAFT.config.brandColor = e.target.value; };
+  document.getElementById('adm-delivery').oninput = e => { DRAFT.config.deliveryFee = Number(e.target.value)||0; };
+  document.getElementById('adm-packaging-fee').oninput = e => { DRAFT.config.packagingFee = Number(e.target.value)||0; };
+
+  renderAdminHours();
+  renderAdminPayments();
+  renderAdminGallery();
+  renderAdminMenu();
+}
+
+// ----- Horarios -----
+function renderAdminHours(){
+  const wrap = document.getElementById('adm-hours-list');
+  wrap.innerHTML = (DRAFT.config.hours||[]).map((h,idx) => `
+    <div class="flex gap-2 items-center">
+      <input value="${esc(h.day)}" placeholder="Día" class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm" data-hidx="${idx}" data-hfield="day">
+      <input value="${esc(h.time)}" placeholder="Horario" class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm" data-hidx="${idx}" data-hfield="time">
+      <button onclick="admRemoveHour(${idx})" class="text-red-400 text-lg px-1">✕</button>
+    </div>`).join('') || '<p class="text-xs text-gray-400">Sin horarios aún.</p>';
+  wrap.querySelectorAll('input').forEach(inp => {
+    inp.oninput = e => { DRAFT.config.hours[Number(e.target.dataset.hidx)][e.target.dataset.hfield] = e.target.value; };
+  });
+}
+function admAddHour(){
+  DRAFT.config.hours = DRAFT.config.hours || [];
+  DRAFT.config.hours.push({ day: 'Nuevo día', time: 'Horario' });
+  renderAdminHours();
+}
+function admRemoveHour(idx){ DRAFT.config.hours.splice(idx,1); renderAdminHours(); }
+
+// ----- Métodos de pago -----
+function renderAdminPayments(){
+  const wrap = document.getElementById('adm-payments-list');
+  wrap.innerHTML = (DRAFT.config.paymentMethods||[]).map((m,idx) => `
+    <div class="border border-gray-100 rounded-xl p-3 space-y-2">
+      <div class="flex gap-2">
+        <input value="${esc(m.label)}" placeholder="Nombre (ej. Nequi)" class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm" data-pidx="${idx}" data-pfield="label">
+        <button onclick="admRemovePayment(${idx})" class="text-red-400 text-lg px-1">✕</button>
+      </div>
+      ${m.isCash ? '' : `
+      <input value="${esc(m.number)}" placeholder="Número / cuenta" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" data-pidx="${idx}" data-pfield="number">
+      <input value="${esc(m.note||'')}" placeholder="Nota adicional (opcional)" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" data-pidx="${idx}" data-pfield="note">
+      `}
+    </div>`).join('') || '<p class="text-xs text-gray-400">Sin métodos de pago aún.</p>';
+  wrap.querySelectorAll('input').forEach(inp => {
+    inp.oninput = e => { DRAFT.config.paymentMethods[Number(e.target.dataset.pidx)][e.target.dataset.pfield] = e.target.value; };
+  });
+}
+function admAddPayment(){
+  DRAFT.config.paymentMethods = DRAFT.config.paymentMethods || [];
+  DRAFT.config.paymentMethods.push({ id: newId(), label: 'Nuevo método', number: '', note: '', isCash: false });
+  renderAdminPayments();
+}
+function admRemovePayment(idx){ DRAFT.config.paymentMethods.splice(idx,1); renderAdminPayments(); }
+
+// ----- Galería -----
+function renderAdminGallery(){
+  const wrap = document.getElementById('adm-gallery-list');
+  wrap.innerHTML = (DRAFT.config.gallery||[]).map((g,idx) => `
+    <div class="border border-gray-100 rounded-xl p-2 space-y-1">
+      <input value="${esc(g.label)}" placeholder="Nombre del plato" class="w-full border border-gray-200 rounded-xl px-2 py-1.5 text-xs" data-gidx="${idx}" data-gfield="label">
+      <input value="${esc(g.image||'')}" placeholder="URL de foto (opcional)" class="w-full border border-gray-200 rounded-xl px-2 py-1.5 text-xs" data-gidx="${idx}" data-gfield="image">
+      <div class="flex gap-1">
+        <input value="${esc(g.emoji||'')}" placeholder="Emoji" maxlength="4" class="w-16 border border-gray-200 rounded-xl px-2 py-1.5 text-xs" data-gidx="${idx}" data-gfield="emoji">
+        <button onclick="admRemoveGalleryItem(${idx})" class="ml-auto text-red-400 text-sm px-1">✕ Quitar</button>
+      </div>
+    </div>`).join('') || '<p class="text-xs text-gray-400 col-span-2">Sin fotos aún.</p>';
+  wrap.querySelectorAll('input').forEach(inp => {
+    inp.oninput = e => { DRAFT.config.gallery[Number(e.target.dataset.gidx)][e.target.dataset.gfield] = e.target.value; };
+  });
+}
+function admAddGalleryItem(){
+  DRAFT.config.gallery = DRAFT.config.gallery || [];
+  DRAFT.config.gallery.push({ label: 'Nuevo plato', emoji: '🍽️', bg: '#f2f2f2', image: '' });
+  renderAdminGallery();
+}
+function admRemoveGalleryItem(idx){ DRAFT.config.gallery.splice(idx,1); renderAdminGallery(); }
+
+// ----- Menú (categorías y productos) -----
+function renderAdminMenu(){
+  const wrap = document.getElementById('adm-menu-list');
+  const cats = Object.keys(DRAFT.menu);
+  wrap.innerHTML = cats.map(cat => `
+    <div class="border border-gray-100 rounded-2xl p-3" data-cat-block="${esc(cat)}">
+      <div class="flex items-center gap-2 mb-2">
+        <input value="${esc(cat)}" class="flex-1 font-semibold text-sm border border-gray-200 rounded-xl px-3 py-1.5" data-catname-old="${esc(cat)}">
+        <button data-catdelete="${esc(cat)}" class="text-red-400 text-sm px-1">✕ Eliminar categoría</button>
+      </div>
+      <div class="space-y-2" data-items-for="${esc(cat)}">
+        ${DRAFT.menu[cat].map((item, idx) => `
+          <div class="bg-gray-50 rounded-xl p-2 space-y-1.5">
+            <div class="flex gap-2">
+              <input value="${esc(item.name)}" placeholder="Nombre del producto" class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs" data-cat="${esc(cat)}" data-idx="${idx}" data-field="name">
+              <input value="${item.price}" type="number" min="0" step="500" placeholder="Precio" class="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-xs" data-cat="${esc(cat)}" data-idx="${idx}" data-field="price">
+              <button data-itemdelete="${esc(cat)}::${idx}" class="text-red-400 text-sm px-1">✕</button>
+            </div>
+            <textarea placeholder="Descripción / ingredientes" class="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs" rows="2" data-cat="${esc(cat)}" data-idx="${idx}" data-field="desc">${esc(item.desc)}</textarea>
+            <div class="flex gap-2">
+              <input value="${esc(item.emoji||'')}" placeholder="Emoji" maxlength="4" class="w-16 border border-gray-200 rounded-lg px-2 py-1.5 text-xs" data-cat="${esc(cat)}" data-idx="${idx}" data-field="emoji">
+              <input value="${esc(item.image||'')}" placeholder="URL de foto (opcional, reemplaza el emoji)" class="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs" data-cat="${esc(cat)}" data-idx="${idx}" data-field="image">
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <button data-additem="${esc(cat)}" class="mt-2 text-xs font-semibold brand-text">+ Agregar producto</button>
+    </div>
+  `).join('') || '<p class="text-xs text-gray-400">Aún no hay categorías. Agrega la primera abajo.</p>';
+
+  wrap.querySelectorAll('input[data-field], textarea[data-field]').forEach(inp => {
+    inp.oninput = e => {
+      const cat = e.target.dataset.cat, idx = Number(e.target.dataset.idx), field = e.target.dataset.field;
+      const val = field === 'price' ? (Number(e.target.value)||0) : e.target.value;
+      DRAFT.menu[cat][idx][field] = val;
+    };
+  });
+  wrap.querySelectorAll('input[data-catname-old]').forEach(inp => {
+    inp.onchange = e => admRenameCategory(e.target.dataset.catnameOld, e.target.value.trim());
+  });
+  wrap.querySelectorAll('[data-catdelete]').forEach(btn => {
+    btn.onclick = () => admRemoveCategory(btn.dataset.catdelete);
+  });
+  wrap.querySelectorAll('[data-itemdelete]').forEach(btn => {
+    btn.onclick = () => { const [cat, idx] = btn.dataset.itemdelete.split('::'); admRemoveItem(cat, Number(idx)); };
+  });
+  wrap.querySelectorAll('[data-additem]').forEach(btn => {
+    btn.onclick = () => admAddItem(btn.dataset.additem);
+  });
+}
+
+function admAddCategory(){
+  const input = document.getElementById('adm-new-cat');
+  const name = input.value.trim();
+  if (!name){ return; }
+  if (DRAFT.menu[name]){ alert('Ya existe una categoría con ese nombre.'); return; }
+  DRAFT.menu[name] = [];
+  input.value = '';
+  renderAdminMenu();
+}
+function admRenameCategory(oldName, newName){
+  if (!newName || newName === oldName){ renderAdminMenu(); return; }
+  if (DRAFT.menu[newName]){ alert('Ya existe una categoría con ese nombre.'); renderAdminMenu(); return; }
+  const rebuilt = {};
+  for (const k in DRAFT.menu) rebuilt[k === oldName ? newName : k] = DRAFT.menu[k];
+  DRAFT.menu = rebuilt;
+  renderAdminMenu();
+}
+function admRemoveCategory(cat){
+  if (!confirm(`¿Eliminar la categoría "${cat}" y todos sus productos?`)) return;
+  delete DRAFT.menu[cat];
+  renderAdminMenu();
+}
+function admAddItem(cat){
+  DRAFT.menu[cat].push({ id: newId(), name: 'Nuevo producto', desc: '', price: 0, emoji: '🍽️', bg: '#f2f2f2', image: '' });
+  renderAdminMenu();
+}
+function admRemoveItem(cat, idx){
+  DRAFT.menu[cat].splice(idx,1);
+  renderAdminMenu();
+}
+
+// ----- Guardar -----
+function showAdminMsg(text, isError){
+  const el = document.getElementById('admin-msg');
+  el.textContent = text;
+  el.className = 'text-xs mt-3 h-4 ' + (isError ? 'text-red-500' : 'text-green-600');
+}
+
+async function saveAdmin(){
+  CONFIG = JSON.parse(JSON.stringify(DRAFT.config));
+  MENU = JSON.parse(JSON.stringify(DRAFT.menu));
+  cart = {};
+  renderAll();
+
+  if (firebaseEnabled){
+    try {
+      await db.collection('restaurants').doc(RESTAURANT_ID).set({ config: CONFIG, menu: MENU }, { merge: false });
+      showAdminMsg('✅ Cambios guardados. Ya son visibles para todos.');
+    } catch(err){
+      showAdminMsg('⚠️ No se pudo guardar en la nube: ' + err.message, true);
+    }
+  } else {
+    localStorage.setItem(LS_KEY, JSON.stringify({ config: CONFIG, menu: MENU }));
+    showAdminMsg('✅ Guardado en este dispositivo (modo demo).');
+  }
+}
+
+// ============================================
+// Suscripción en vivo a Firebase (si está configurado)
+// ============================================
+if (firebaseEnabled){
+  db.collection('restaurants').doc(RESTAURANT_ID).onSnapshot(doc => {
+    const adminOpen = !document.getElementById('admin-modal').classList.contains('hidden');
+    if (adminOpen) return; // no pisar lo que el dueño está editando
+    if (doc.exists){
+      const data = doc.data();
+      if (data.config) CONFIG = data.config;
+      if (data.menu) MENU = data.menu;
+    }
+    renderAll();
+  }, err => {
+    console.error('Firebase onSnapshot error', err);
+    renderAll();
+  });
+} else {
+  renderAll();
+}
 </script>
 
 </body>
