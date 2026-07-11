@@ -148,6 +148,7 @@
 
     <div id="cart-totals" class="hidden text-sm mt-3 space-y-1">
       <div class="flex justify-between"><span>Subtotal</span><span id="cart-subtotal">$0</span></div>
+      <div id="cart-packaging-row" class="flex justify-between"><span id="cart-packaging-label">Empaque</span><span id="cart-packaging">$0</span></div>
       <div class="flex justify-between"><span>Delivery</span><span id="cart-delivery">$0</span></div>
       <div class="flex justify-between font-bold text-base border-t pt-2 mt-1"><span>Total</span><span id="cart-total">$0</span></div>
     </div>
@@ -269,6 +270,8 @@
         <div class="admin-field col-span-2"><label>Instagram (link completo)</label><input id="adm-instagram"></div>
         <div class="admin-field"><label>Costo de domicilio</label><input id="adm-delivery" type="number" min="0" step="500"></div>
         <div class="admin-field"><label>Símbolo de moneda</label><input id="adm-currency"></div>
+        <div class="admin-field"><label>Cobro de caja/empaque (por unidad pedida)</label><input id="adm-packaging-fee" type="number" min="0" step="100"></div>
+        <div class="admin-field"><label>Nombre de ese cobro</label><input id="adm-packaging-label" placeholder="Ej. Caja para llevar"></div>
       </div>
 
       <div class="admin-section-title">Horario de atención</div>
@@ -325,6 +328,8 @@ const DEFAULT_CONFIG = {
   instagramUrl: "https://instagram.com/",
   deliveryFee: 5000,
   currency: "$",
+  packagingFee: 1000,
+  packagingLabel: "Caja para llevar",
   adminPin: "1234",
   ownerEmail: "",
   hours: [
@@ -620,15 +625,25 @@ function renderCart(){
   updateCartTotals();
   updatePaymentNote();
 }
+function packagingTotal(){ return cartCount() * (CONFIG.packagingFee||0); }
 function updateCartTotals(){
   const deliveryType = document.getElementById('cf-delivery').value;
   const addrWrap = document.getElementById('cf-address-wrap');
   addrWrap.style.display = deliveryType === 'delivery' ? 'block' : 'none';
   const fee = deliveryType === 'delivery' ? (CONFIG.deliveryFee||0) : 0;
   const subtotal = cartSubtotal();
+  const packaging = packagingTotal();
+  const packagingRow = document.getElementById('cart-packaging-row');
+  if (packaging > 0){
+    packagingRow.classList.remove('hidden');
+    document.getElementById('cart-packaging-label').textContent = `${CONFIG.packagingLabel||'Empaque'} (${cartCount()} x ${fmt(CONFIG.packagingFee||0)})`;
+    document.getElementById('cart-packaging').textContent = fmt(packaging);
+  } else {
+    packagingRow.classList.add('hidden');
+  }
   document.getElementById('cart-subtotal').textContent = fmt(subtotal);
   document.getElementById('cart-delivery').textContent = fee === 0 ? 'Gratis' : fmt(fee);
-  document.getElementById('cart-total').textContent = fmt(subtotal + fee);
+  document.getElementById('cart-total').textContent = fmt(subtotal + packaging + fee);
 }
 function findPaymentMethod(id){
   const methods = CONFIG.paymentMethods || [];
@@ -655,8 +670,9 @@ function sendOrderToWhatsApp(){
 
   const entries = Object.entries(cart);
   const subtotal = cartSubtotal();
+  const packaging = packagingTotal();
   const fee = deliveryType === 'delivery' ? (CONFIG.deliveryFee||0) : 0;
-  const total = subtotal + fee;
+  const total = subtotal + packaging + fee;
 
   let msg = `🍔 *Nuevo pedido - ${CONFIG.restaurantName}*\n\n`;
   msg += `Cliente: ${name}\n`;
@@ -668,7 +684,9 @@ function sendOrderToWhatsApp(){
     if (!item) return;
     msg += `• ${qty}x ${item.name} - ${fmt(item.price*qty)}\n`;
   });
-  msg += `\nSubtotal: ${fmt(subtotal)}\nDelivery: ${fee===0?'Gratis':fmt(fee)}\n*Total: ${fmt(total)}*\n\n`;
+  msg += `\nSubtotal: ${fmt(subtotal)}\n`;
+  if (packaging > 0) msg += `${CONFIG.packagingLabel||'Empaque'} (${cartCount()} x ${fmt(CONFIG.packagingFee||0)}): ${fmt(packaging)}\n`;
+  msg += `Delivery: ${fee===0?'Gratis':fmt(fee)}\n*Total: ${fmt(total)}*\n\n`;
 
   if (!method || method.isCash){
     msg += `💵 *Pago: ${method ? method.label : 'Efectivo contraentrega'}*\n`;
@@ -810,6 +828,8 @@ function renderAdminForm(){
   document.getElementById('adm-instagram').value = c.instagramUrl || '';
   document.getElementById('adm-delivery').value = c.deliveryFee || 0;
   document.getElementById('adm-currency').value = c.currency || '$';
+  document.getElementById('adm-packaging-fee').value = c.packagingFee || 0;
+  document.getElementById('adm-packaging-label').value = c.packagingLabel || 'Caja para llevar';
   document.getElementById('adm-agency-name').value = c.agencyName || '';
   document.getElementById('adm-agency-url').value = c.agencyUrl || '';
   document.getElementById('adm-pin').value = c.adminPin || '1234';
@@ -819,12 +839,13 @@ function renderAdminForm(){
     ['adm-avatar-emoji','avatarEmoji'], ['adm-avatar-image','avatarImage'], ['adm-hero-image','heroImage'],
     ['adm-phone','phoneTel'], ['adm-whatsapp','whatsappNumber'], ['adm-address','address'],
     ['adm-instagram','instagramUrl'], ['adm-currency','currency'], ['adm-agency-name','agencyName'],
-    ['adm-agency-url','agencyUrl'], ['adm-pin','adminPin']
+    ['adm-agency-url','agencyUrl'], ['adm-pin','adminPin'], ['adm-packaging-label','packagingLabel']
   ].forEach(([elId, field]) => {
     document.getElementById(elId).oninput = e => { DRAFT.config[field] = e.target.value; };
   });
   document.getElementById('adm-color').oninput = e => { DRAFT.config.brandColor = e.target.value; };
   document.getElementById('adm-delivery').oninput = e => { DRAFT.config.deliveryFee = Number(e.target.value)||0; };
+  document.getElementById('adm-packaging-fee').oninput = e => { DRAFT.config.packagingFee = Number(e.target.value)||0; };
 
   renderAdminHours();
   renderAdminPayments();
