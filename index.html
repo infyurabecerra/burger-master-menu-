@@ -89,15 +89,19 @@
     <p class="text-xs muted mt-1">Selecciona una opción para comenzar</p>
   </div>
   <div class="grid grid-cols-2 gap-3 px-6 mt-3">
-    <button onclick="startOrder('delivery')" class="rounded-2xl p-4 text-center surface">
-      <div class="text-4xl mb-1">🛵</div>
-      <div class="font-bold text-sm">Domicilio</div>
-      <div class="text-[11px] mt-1 muted">Lo llevamos hasta tu casa</div>
+    <button onclick="startOrder('delivery')" class="rounded-2xl overflow-hidden text-center surface">
+      <div id="home-delivery-content" class="p-4">
+        <div class="text-4xl mb-1">🛵</div>
+        <div class="font-bold text-sm">Domicilio</div>
+        <div class="text-[11px] mt-1 muted">Lo llevamos hasta tu casa</div>
+      </div>
     </button>
-    <button onclick="startOrder('pickup')" class="rounded-2xl p-4 text-center surface">
-      <div class="text-4xl mb-1">🥡</div>
-      <div class="font-bold text-sm">Para llevar</div>
-      <div class="text-[11px] mt-1 muted">Pasas a recogerlo tú</div>
+    <button onclick="startOrder('pickup')" class="rounded-2xl overflow-hidden text-center surface">
+      <div id="home-pickup-content" class="p-4">
+        <div class="text-4xl mb-1">🥡</div>
+        <div class="font-bold text-sm">Para llevar</div>
+        <div class="text-[11px] mt-1 muted">Pasas a recogerlo tú</div>
+      </div>
     </button>
   </div>
 
@@ -182,15 +186,19 @@
 
     <div id="cart-body" class="hidden">
       <div class="grid grid-cols-2 gap-3 mb-4">
-        <button id="dt-delivery" onclick="selectDeliveryType('delivery')" class="rounded-2xl p-4 text-center surface">
-          <div class="text-4xl mb-1">🛵</div>
-          <div class="font-bold text-sm">Domicilio</div>
-          <div class="text-[11px] mt-1 muted">Lo llevamos hasta tu casa</div>
+        <button id="dt-delivery" onclick="selectDeliveryType('delivery')" class="rounded-2xl overflow-hidden text-center surface">
+          <div id="cart-delivery-content" class="p-4">
+            <div class="text-4xl mb-1">🛵</div>
+            <div class="font-bold text-sm">Domicilio</div>
+            <div class="text-[11px] mt-1 muted">Lo llevamos hasta tu casa</div>
+          </div>
         </button>
-        <button id="dt-pickup" onclick="selectDeliveryType('pickup')" class="rounded-2xl p-4 text-center surface">
-          <div class="text-4xl mb-1">🥡</div>
-          <div class="font-bold text-sm">Para llevar</div>
-          <div class="text-[11px] mt-1 muted">Pasas a recogerlo tú</div>
+        <button id="dt-pickup" onclick="selectDeliveryType('pickup')" class="rounded-2xl overflow-hidden text-center surface">
+          <div id="cart-pickup-content" class="p-4">
+            <div class="text-4xl mb-1">🥡</div>
+            <div class="font-bold text-sm">Para llevar</div>
+            <div class="text-[11px] mt-1 muted">Pasas a recogerlo tú</div>
+          </div>
         </button>
       </div>
 
@@ -298,6 +306,8 @@
         <div class="admin-field"><label>Emoji del logo</label><input id="adm-avatar-emoji" maxlength="4"></div>
         <div class="admin-field col-span-2"><label>Foto de logo (URL, opcional)</label><input id="adm-avatar-image" placeholder="https://..."></div>
         <div class="admin-field col-span-2"><label>Foto principal / hero (URL)</label><input id="adm-hero-image" placeholder="https://..."></div>
+        <div class="admin-field col-span-2"><label>Foto tarjeta "Domicilio" (URL, opcional)</label><input id="adm-delivery-card-image" placeholder="https://..."></div>
+        <div class="admin-field col-span-2"><label>Foto tarjeta "Para llevar" (URL, opcional)</label><input id="adm-pickup-card-image" placeholder="https://..."></div>
         <div class="admin-field col-span-2"><label>Teléfono (con indicativo, ej. +573001234567)</label><input id="adm-phone"></div>
         <div class="admin-field col-span-2"><label>WhatsApp (solo números, ej. 573001234567)</label><input id="adm-whatsapp"></div>
         <div class="admin-field col-span-2"><label>Dirección / ubicación</label><input id="adm-address"></div>
@@ -369,6 +379,8 @@ const DEFAULT_CONFIG = {
   restaurantName: "Burger Master La Cruz",
   tagline: "Sabor que te conquista",
   heroDescription: "Disfruta de nuestras deliciosas hamburguesas, alitas, burritos y mucho más.",
+  deliveryCardImage: "",
+  pickupCardImage: "",
   brandColor: "#f5a524",
   brandColorDark: "#c2610a",
   avatarEmoji: "🍔",
@@ -548,6 +560,7 @@ function initHeader(){
   renderRating();
   renderStatusBadge();
   renderPromo();
+  renderDeliveryCards();
 }
 
 // ---------- Calificación ----------
@@ -588,6 +601,22 @@ function renderStatusBadge(){
 function startOrder(type){
   deliveryType = type;
   openModal('menu-modal');
+}
+
+// ---------- Tarjetas de Domicilio / Para llevar ----------
+function renderDeliveryCards(){
+  const dImg = CONFIG.deliveryCardImage;
+  const pImg = CONFIG.pickupCardImage;
+  const dHtml = dImg
+    ? `<img src="${esc(dImg)}" class="w-full h-36 object-cover" alt="Domicilio">`
+    : `<div class="p-4"><div class="text-4xl mb-1">🛵</div><div class="font-bold text-sm">Domicilio</div><div class="text-[11px] mt-1 muted">Lo llevamos hasta tu casa</div></div>`;
+  const pHtml = pImg
+    ? `<img src="${esc(pImg)}" class="w-full h-36 object-cover" alt="Para llevar">`
+    : `<div class="p-4"><div class="text-4xl mb-1">🥡</div><div class="font-bold text-sm">Para llevar</div><div class="text-[11px] mt-1 muted">Pasas a recogerlo tú</div></div>`;
+  document.getElementById('home-delivery-content').innerHTML = dHtml;
+  document.getElementById('home-pickup-content').innerHTML = pHtml;
+  document.getElementById('cart-delivery-content').innerHTML = dHtml;
+  document.getElementById('cart-pickup-content').innerHTML = pHtml;
 }
 setInterval(() => { if (CONFIG) renderStatusBadge(); }, 60000);
 
@@ -741,7 +770,7 @@ function renderPaymentOptions(){
   if (!selectedPaymentId || !methods.find(m=>m.id===selectedPaymentId)) selectedPaymentId = methods[0].id;
   wrap.innerHTML = methods.map(m => `
     <button onclick="selectPayment('${m.id}')" class="rounded-xl p-2.5 text-center surface ${m.id===selectedPaymentId ? 'pay-active' : ''}">
-      <div class="text-xl">${paymentIcon(m.label)}</div>
+      <div class="text-xl flex items-center justify-center h-6">${m.image ? `<img src="${esc(m.image)}" class="h-6 object-contain">` : paymentIcon(m.label)}</div>
       <div class="text-[10px] font-semibold mt-1 truncate">${esc(m.label)}</div>
     </button>`).join('');
 }
@@ -961,6 +990,8 @@ function renderAdminForm(){
   document.getElementById('adm-avatar-emoji').value = c.avatarEmoji || '';
   document.getElementById('adm-avatar-image').value = c.avatarImage || '';
   document.getElementById('adm-hero-image').value = c.heroImage || '';
+  document.getElementById('adm-delivery-card-image').value = c.deliveryCardImage || '';
+  document.getElementById('adm-pickup-card-image').value = c.pickupCardImage || '';
   document.getElementById('adm-phone').value = c.phoneTel || '';
   document.getElementById('adm-whatsapp').value = c.whatsappNumber || '';
   document.getElementById('adm-address').value = c.address || '';
@@ -985,6 +1016,7 @@ function renderAdminForm(){
   [
     ['adm-name','restaurantName'], ['adm-tagline','tagline'], ['adm-hero-desc','heroDescription'],
     ['adm-avatar-emoji','avatarEmoji'], ['adm-avatar-image','avatarImage'], ['adm-hero-image','heroImage'],
+    ['adm-delivery-card-image','deliveryCardImage'], ['adm-pickup-card-image','pickupCardImage'],
     ['adm-phone','phoneTel'], ['adm-whatsapp','whatsappNumber'], ['adm-address','address'],
     ['adm-instagram','instagramUrl'], ['adm-currency','currency'], ['adm-agency-name','agencyName'],
     ['adm-agency-url','agencyUrl'], ['adm-pin','adminPin'], ['adm-packaging-label','packagingLabel'],
@@ -1057,6 +1089,7 @@ function renderAdminPayments(){
         <input value="${esc(m.label)}" placeholder="Nombre (ej. Nequi)" class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm" data-pidx="${idx}" data-pfield="label">
         <button onclick="admRemovePayment(${idx})" class="text-red-400 text-lg px-1">✕</button>
       </div>
+      <input value="${esc(m.image||'')}" placeholder="URL del logo/ícono (opcional)" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" data-pidx="${idx}" data-pfield="image">
       ${m.isCash ? '' : `
       <input value="${esc(m.number)}" placeholder="Número / cuenta" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" data-pidx="${idx}" data-pfield="number">
       <input value="${esc(m.note||'')}" placeholder="Nota adicional (opcional)" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" data-pidx="${idx}" data-pfield="note">
