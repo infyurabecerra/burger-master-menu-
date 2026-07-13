@@ -106,21 +106,13 @@
   </div>
 
   <!-- ============ ICONOS RÁPIDOS ============ -->
-  <div class="grid grid-cols-4 gap-3 mt-5 px-6 text-center">
-    <a id="wa-link" href="#" target="_blank" class="flex flex-col items-center">
-      <div class="icon-circle w-14 h-14 rounded-full flex items-center justify-center text-2xl text-white" style="background:#22c55e;">💬</div>
-      <span class="text-[11px] font-medium mt-1.5">WhatsApp</span>
-    </a>
-    <a id="call-link" href="#" class="flex flex-col items-center">
-      <div class="icon-circle w-14 h-14 rounded-full flex items-center justify-center text-2xl text-white brand-bg">📞</div>
-      <span class="text-[11px] font-medium mt-1.5">Llamar</span>
-    </a>
+  <div class="flex justify-center gap-10 mt-5 px-6 text-center">
     <a id="maps-link" href="#" target="_blank" class="flex flex-col items-center">
-      <div class="icon-circle w-14 h-14 rounded-full flex items-center justify-center text-2xl text-white" style="background:#ef4444;">📍</div>
+      <div id="maps-icon" class="icon-circle w-14 h-14 rounded-full flex items-center justify-center text-2xl text-white overflow-hidden" style="background:#ef4444;">📍</div>
       <span class="text-[11px] font-medium mt-1.5">Ubicación</span>
     </a>
     <a id="ig-link" href="#" target="_blank" class="flex flex-col items-center">
-      <div class="icon-circle w-14 h-14 rounded-full flex items-center justify-center text-2xl text-white" style="background:linear-gradient(135deg,#f9ce34,#ee2a7b,#6228d7);">📷</div>
+      <div id="ig-icon" class="icon-circle w-14 h-14 rounded-full flex items-center justify-center text-2xl text-white overflow-hidden" style="background:linear-gradient(135deg,#f9ce34,#ee2a7b,#6228d7);">📷</div>
       <span class="text-[11px] font-medium mt-1.5">Instagram</span>
     </a>
   </div>
@@ -311,7 +303,9 @@
         <div class="admin-field col-span-2"><label>Teléfono (con indicativo, ej. +573001234567)</label><input id="adm-phone"></div>
         <div class="admin-field col-span-2"><label>WhatsApp (solo números, ej. 573001234567)</label><input id="adm-whatsapp"></div>
         <div class="admin-field col-span-2"><label>Dirección / ubicación</label><input id="adm-address"></div>
+        <div class="admin-field col-span-2"><label>Foto ícono de Ubicación (URL, opcional)</label><input id="adm-maps-icon" placeholder="https://..."></div>
         <div class="admin-field col-span-2"><label>Instagram (link completo)</label><input id="adm-instagram"></div>
+        <div class="admin-field col-span-2"><label>Foto ícono de Instagram (URL, opcional)</label><input id="adm-ig-icon" placeholder="https://..."></div>
         <div class="admin-field"><label>Costo de domicilio</label><input id="adm-delivery" type="number" min="0" step="500"></div>
         <div class="admin-field"><label>Símbolo de moneda</label><input id="adm-currency"></div>
         <div class="admin-field"><label>Cobro de caja/empaque (por unidad)</label><input id="adm-packaging-fee" type="number" min="0" step="100"></div>
@@ -394,8 +388,10 @@ const DEFAULT_CONFIG = {
   heroImage: "https://i.postimg.cc/W15DZnxM/fondo-imagen-principal.png",
   phoneTel: "+573113170263",
   whatsappNumber: "573113170263",
-  address: "Al lado de la Iglesia Católica, La Cruz, Nariño",
-  instagramUrl: "https://instagram.com/",
+  address: "Cl. 6#8-95",
+  instagramUrl: "https://www.instagram.com/monserraterecetaoriginal?igsh=MXVxM2Vpbm42eDNpMw==",
+  mapsIconImage: "https://i.postimg.cc/mrT0v3DZ/Ubicacion.png",
+  igIconImage: "https://i.postimg.cc/fbM6G7LQ/Instagram.avif",
   deliveryFee: 2000,
   currency: "$",
   packagingFee: 1000,
@@ -409,7 +405,7 @@ const DEFAULT_CONFIG = {
     { day: "Martes a domingo", time: "10:00 am – 11:00 pm" },
     { day: "Lunes", time: "Cerrado" }
   ],
-  promo: { enabled: true, title: "Combo Clásico", desc: "Hamburguesa + Papas + Bebida personal", price: 28900, image: "" },
+  promo: { enabled: true, title: "Combo Semana", desc: "Hamburguesa + Papas + Bebida personal", price: 28900, image: "https://i.postimg.cc/fb56D3tR/combo-de-la-semana.png" },
   paymentMethods: [
     { id: "efectivo", label: "Efectivo", number: "", note: "", isCash: true },
     { id: "nequi", label: "Nequi", number: "300414620", note: "", image: "https://i.postimg.cc/LYndzDgj/NEQUI-LOGO.jpg" },
@@ -533,10 +529,16 @@ function initHeader(){
   document.getElementById('rwelcome2').textContent = CONFIG.restaurantName + '!';
   document.getElementById('rherodesc').textContent = CONFIG.heroDescription || '';
   document.getElementById('rlocation').textContent = "📍 " + (CONFIG.address || "");
-  document.getElementById('call-link').href = 'tel:' + CONFIG.phoneTel;
   document.getElementById('maps-link').href = derivedMapsUrl();
   document.getElementById('ig-link').href = CONFIG.instagramUrl || '#';
-  document.getElementById('wa-link').href = 'https://wa.me/' + CONFIG.whatsappNumber + '?text=' + encodeURIComponent('Hola ' + CONFIG.restaurantName + ', quiero hacer un pedido');
+
+  const mapsIcon = document.getElementById('maps-icon');
+  if (CONFIG.mapsIconImage){ mapsIcon.innerHTML = `<img src="${esc(CONFIG.mapsIconImage)}" class="w-full h-full object-cover">`; }
+  else { mapsIcon.textContent = '📍'; }
+
+  const igIcon = document.getElementById('ig-icon');
+  if (CONFIG.igIconImage){ igIcon.innerHTML = `<img src="${esc(CONFIG.igIconImage)}" class="w-full h-full object-cover">`; }
+  else { igIcon.textContent = '📷'; }
 
   const logo = document.getElementById('rlogo');
   const logoFallback = document.getElementById('rlogo-fallback');
@@ -1014,6 +1016,8 @@ function renderAdminForm(){
   document.getElementById('adm-whatsapp').value = c.whatsappNumber || '';
   document.getElementById('adm-address').value = c.address || '';
   document.getElementById('adm-instagram').value = c.instagramUrl || '';
+  document.getElementById('adm-maps-icon').value = c.mapsIconImage || '';
+  document.getElementById('adm-ig-icon').value = c.igIconImage || '';
   document.getElementById('adm-delivery').value = c.deliveryFee || 0;
   document.getElementById('adm-currency').value = c.currency || '$';
   document.getElementById('adm-packaging-fee').value = c.packagingFee || 0;
@@ -1036,7 +1040,8 @@ function renderAdminForm(){
     ['adm-avatar-emoji','avatarEmoji'], ['adm-avatar-image','avatarImage'], ['adm-hero-image','heroImage'],
     ['adm-delivery-card-image','deliveryCardImage'], ['adm-pickup-card-image','pickupCardImage'],
     ['adm-phone','phoneTel'], ['adm-whatsapp','whatsappNumber'], ['adm-address','address'],
-    ['adm-instagram','instagramUrl'], ['adm-currency','currency'], ['adm-agency-name','agencyName'],
+    ['adm-instagram','instagramUrl'], ['adm-maps-icon','mapsIconImage'], ['adm-ig-icon','igIconImage'],
+    ['adm-currency','currency'], ['adm-agency-name','agencyName'],
     ['adm-agency-url','agencyUrl'], ['adm-pin','adminPin'], ['adm-packaging-label','packagingLabel'],
     ['adm-rating-score','ratingScore']
   ].forEach(([elId, field]) => {
