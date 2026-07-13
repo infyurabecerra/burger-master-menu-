@@ -99,8 +99,8 @@
     <button onclick="startOrder('pickup')" class="rounded-2xl overflow-hidden text-center surface">
       <div id="home-pickup-content" class="p-4">
         <div class="text-4xl mb-1">🥡</div>
-        <div class="font-bold text-sm">Para llevar</div>
-        <div class="text-[11px] mt-1 muted">Pasas a recogerlo tú</div>
+        <div class="font-bold text-sm">Para retirar</div>
+        <div class="text-[11px] mt-1 muted">Pasas a retirarlo tú</div>
       </div>
     </button>
   </div>
@@ -196,8 +196,8 @@
         <button id="dt-pickup" onclick="selectDeliveryType('pickup')" class="rounded-2xl overflow-hidden text-center surface">
           <div id="cart-pickup-content" class="p-4">
             <div class="text-4xl mb-1">🥡</div>
-            <div class="font-bold text-sm">Para llevar</div>
-            <div class="text-[11px] mt-1 muted">Pasas a recogerlo tú</div>
+            <div class="font-bold text-sm">Para retirar</div>
+            <div class="text-[11px] mt-1 muted">Pasas a retirarlo tú</div>
           </div>
         </button>
       </div>
@@ -307,7 +307,7 @@
         <div class="admin-field col-span-2"><label>Foto de logo (URL, opcional)</label><input id="adm-avatar-image" placeholder="https://..."></div>
         <div class="admin-field col-span-2"><label>Foto principal / hero (URL)</label><input id="adm-hero-image" placeholder="https://..."></div>
         <div class="admin-field col-span-2"><label>Foto tarjeta "Domicilio" (URL, opcional)</label><input id="adm-delivery-card-image" placeholder="https://..."></div>
-        <div class="admin-field col-span-2"><label>Foto tarjeta "Para llevar" (URL, opcional)</label><input id="adm-pickup-card-image" placeholder="https://..."></div>
+        <div class="admin-field col-span-2"><label>Foto tarjeta "Para retirar" (URL, opcional)</label><input id="adm-pickup-card-image" placeholder="https://..."></div>
         <div class="admin-field col-span-2"><label>Teléfono (con indicativo, ej. +573001234567)</label><input id="adm-phone"></div>
         <div class="admin-field col-span-2"><label>WhatsApp (solo números, ej. 573001234567)</label><input id="adm-whatsapp"></div>
         <div class="admin-field col-span-2"><label>Dirección / ubicación</label><input id="adm-address"></div>
@@ -603,7 +603,7 @@ function startOrder(type){
   openModal('menu-modal');
 }
 
-// ---------- Tarjetas de Domicilio / Para llevar ----------
+// ---------- Tarjetas de Domicilio / Para retirar ----------
 function renderDeliveryCards(){
   const dImg = CONFIG.deliveryCardImage;
   const pImg = CONFIG.pickupCardImage;
@@ -611,8 +611,8 @@ function renderDeliveryCards(){
     ? `<img src="${esc(dImg)}" class="w-full h-auto block" alt="Domicilio">`
     : `<div class="p-4"><div class="text-4xl mb-1">🛵</div><div class="font-bold text-sm">Domicilio</div><div class="text-[11px] mt-1 muted">Lo llevamos hasta tu casa</div></div>`;
   const pHtml = pImg
-    ? `<img src="${esc(pImg)}" class="w-full h-auto block" alt="Para llevar">`
-    : `<div class="p-4"><div class="text-4xl mb-1">🥡</div><div class="font-bold text-sm">Para llevar</div><div class="text-[11px] mt-1 muted">Pasas a recogerlo tú</div></div>`;
+    ? `<img src="${esc(pImg)}" class="w-full h-auto block" alt="Para retirar">`
+    : `<div class="p-4"><div class="text-4xl mb-1">🥡</div><div class="font-bold text-sm">Para retirar</div><div class="text-[11px] mt-1 muted">Pasas a retirarlo tú</div></div>`;
   document.getElementById('home-delivery-content').innerHTML = dHtml;
   document.getElementById('home-pickup-content').innerHTML = pHtml;
   document.getElementById('cart-delivery-content').innerHTML = dHtml;
