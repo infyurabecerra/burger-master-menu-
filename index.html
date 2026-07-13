@@ -379,13 +379,13 @@ const DEFAULT_CONFIG = {
   restaurantName: "Burger Master La Cruz",
   tagline: "Sabor que te conquista",
   heroDescription: "Disfruta de nuestras deliciosas hamburguesas, alitas, burritos y mucho más.",
-  deliveryCardImage: "",
-  pickupCardImage: "",
+  deliveryCardImage: "https://i.postimg.cc/sB3sZ5cz/Captura-de-pantalla-2026-07-12-a-las-7-21-55-p-m.png",
+  pickupCardImage: "https://i.postimg.cc/D4XtNzg1/Captura-de-pantalla-2026-07-12-a-las-7-22-02-p-m.png",
   brandColor: "#f5a524",
   brandColorDark: "#c2610a",
   avatarEmoji: "🍔",
-  avatarImage: "",
-  heroImage: "",
+  avatarImage: "https://i.postimg.cc/nMXZ7FvQ/Chat-GPT-Image-12-jul-2026-19-16-50.png",
+  heroImage: "https://i.postimg.cc/6T8wRWdZ/Chat-GPT-Image-12-jul-2026-19-21-39.png",
   phoneTel: "+573004214620",
   whatsappNumber: "573004214620",
   address: "Al lado de la Iglesia Católica, La Cruz, Nariño",
@@ -406,7 +406,7 @@ const DEFAULT_CONFIG = {
   promo: { enabled: true, title: "Combo Clásico", desc: "Hamburguesa + Papas + Bebida personal", price: 28900, image: "" },
   paymentMethods: [
     { id: "efectivo", label: "Efectivo", number: "", note: "", isCash: true },
-    { id: "nequi", label: "Nequi", number: "300414620", note: "" }
+    { id: "nequi", label: "Nequi", number: "300414620", note: "", image: "https://i.postimg.cc/LYndzDgj/NEQUI-LOGO.jpg" }
   ],
   agencyName: "",
   agencyUrl: ""
@@ -608,10 +608,10 @@ function renderDeliveryCards(){
   const dImg = CONFIG.deliveryCardImage;
   const pImg = CONFIG.pickupCardImage;
   const dHtml = dImg
-    ? `<img src="${esc(dImg)}" class="w-full h-36 object-cover" alt="Domicilio">`
+    ? `<img src="${esc(dImg)}" class="w-full h-auto block" alt="Domicilio">`
     : `<div class="p-4"><div class="text-4xl mb-1">🛵</div><div class="font-bold text-sm">Domicilio</div><div class="text-[11px] mt-1 muted">Lo llevamos hasta tu casa</div></div>`;
   const pHtml = pImg
-    ? `<img src="${esc(pImg)}" class="w-full h-36 object-cover" alt="Para llevar">`
+    ? `<img src="${esc(pImg)}" class="w-full h-auto block" alt="Para llevar">`
     : `<div class="p-4"><div class="text-4xl mb-1">🥡</div><div class="font-bold text-sm">Para llevar</div><div class="text-[11px] mt-1 muted">Pasas a recogerlo tú</div></div>`;
   document.getElementById('home-delivery-content').innerHTML = dHtml;
   document.getElementById('home-pickup-content').innerHTML = pHtml;
