@@ -62,22 +62,43 @@
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
   </button>
 
-  <!-- ============ ENCABEZADO ============ -->
-  <div class="pt-8 px-6 text-center">
-    <div id="ravatar" class="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center text-3xl overflow-hidden bg-cover bg-center surface">🍔</div>
-    <h1 id="rname" class="mt-3 text-2xl font-display font-bold"></h1>
-    <p id="rtagline" class="text-sm italic mt-1 muted"></p>
-  </div>
-
-  <!-- ============ ESTADO + CALIFICACIÓN ============ -->
-  <div class="flex items-start justify-between px-6 mt-4 gap-3">
-    <button id="status-chip" onclick="openModal('hours-modal')" class="text-left rounded-xl px-3 py-2 surface"></button>
-    <div id="rating-chip" class="text-right pt-1"></div>
-  </div>
-
-  <!-- ============ FOTO PRINCIPAL ============ -->
-  <div class="mt-4 relative h-48 bg-cover bg-center" id="hero">
+  <!-- ============ PORTADA (foto + logo + bienvenida) ============ -->
+  <div class="relative min-h-[420px] bg-cover bg-center flex flex-col" id="hero">
     <div id="hero-pattern" class="absolute inset-0 opacity-20 text-7xl flex flex-wrap gap-4 p-2 select-none" style="background:var(--surface);">🌵🍔🌶️🌮🥙🌵🍔🌶️</div>
+    <div class="absolute inset-0" style="background:linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.8) 65%, var(--bg) 100%);"></div>
+
+    <div id="rating-chip" class="absolute top-4 right-4 z-10 text-right"></div>
+
+    <div class="relative z-10 flex flex-col items-center pt-10 px-6 text-center">
+      <img id="rlogo" class="hidden h-24 object-contain mb-3" alt="Logo">
+      <div id="rlogo-fallback" class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-3 surface">🍔</div>
+      <h1 class="text-xl font-semibold text-white">¡Bienvenido a</h1>
+      <h1 id="rwelcome2" class="text-3xl font-display font-extrabold brand-text leading-tight"></h1>
+      <p id="rherodesc" class="text-sm mt-3 max-w-xs" style="color:rgba(255,255,255,.85);"></p>
+      <div id="hero-status-pills" class="flex gap-3 mt-4 cursor-pointer" onclick="openModal('hours-modal')"></div>
+    </div>
+  </div>
+
+  <!-- ============ ¿CÓMO DESEAS TU PEDIDO? ============ -->
+  <div class="px-6 pt-6 text-center">
+    <div class="flex items-center gap-3">
+      <div class="flex-1 h-px" style="background:var(--border);"></div>
+      <h2 class="font-display font-bold text-lg">¿Cómo deseas tu pedido?</h2>
+      <div class="flex-1 h-px" style="background:var(--border);"></div>
+    </div>
+    <p class="text-xs muted mt-1">Selecciona una opción para comenzar</p>
+  </div>
+  <div class="grid grid-cols-2 gap-3 px-6 mt-3">
+    <button onclick="startOrder('delivery')" class="rounded-2xl p-4 text-center surface">
+      <div class="text-4xl mb-1">🛵</div>
+      <div class="font-bold text-sm">Domicilio</div>
+      <div class="text-[11px] mt-1 muted">Lo llevamos hasta tu casa</div>
+    </button>
+    <button onclick="startOrder('pickup')" class="rounded-2xl p-4 text-center surface">
+      <div class="text-4xl mb-1">🥡</div>
+      <div class="font-bold text-sm">Para llevar</div>
+      <div class="text-[11px] mt-1 muted">Pasas a recogerlo tú</div>
+    </button>
   </div>
 
   <!-- ============ ICONOS RÁPIDOS ============ -->
@@ -271,7 +292,8 @@
       <div class="admin-section-title">Información del negocio</div>
       <div class="grid grid-cols-2 gap-3">
         <div class="admin-field col-span-2"><label>Nombre del negocio</label><input id="adm-name"></div>
-        <div class="admin-field col-span-2"><label>Frase / especialidad</label><input id="adm-tagline"></div>
+        <div class="admin-field col-span-2"><label>Frase / especialidad (para tarjeta de contacto)</label><input id="adm-tagline"></div>
+        <div class="admin-field col-span-2"><label>Texto de bienvenida (bajo el nombre, en la portada)</label><input id="adm-hero-desc"></div>
         <div class="admin-field"><label>Color de marca</label><input id="adm-color" type="color"></div>
         <div class="admin-field"><label>Emoji del logo</label><input id="adm-avatar-emoji" maxlength="4"></div>
         <div class="admin-field col-span-2"><label>Foto de logo (URL, opcional)</label><input id="adm-avatar-image" placeholder="https://..."></div>
@@ -346,6 +368,7 @@
 const DEFAULT_CONFIG = {
   restaurantName: "Burger Master La Cruz",
   tagline: "Sabor que te conquista",
+  heroDescription: "Disfruta de nuestras deliciosas hamburguesas, alitas, burritos y mucho más.",
   brandColor: "#f5a524",
   brandColorDark: "#c2610a",
   avatarEmoji: "🍔",
@@ -470,13 +493,6 @@ function newId(){ return "id" + Date.now().toString(36) + Math.random().toString
 function derivedMapsUrl(){
   return CONFIG.mapsUrl || ("https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(CONFIG.address || CONFIG.restaurantName));
 }
-function twoTone(name){
-  const parts = String(name||'').trim().split(/\s+/);
-  if (parts.length <= 1) return `<span class="brand-text">${esc(name||'')}</span>`;
-  const last = parts.pop();
-  return `${esc(parts.join(' '))} <span class="brand-text">${esc(last)}</span>`;
-}
-
 // ---------- Modales genéricos ----------
 function openModal(id){
   document.getElementById(id).classList.remove('hidden');
@@ -495,17 +511,25 @@ function applyBrandColor(){
 
 // ---------- Header dinámico ----------
 function initHeader(){
-  document.getElementById('rname').innerHTML = twoTone(CONFIG.restaurantName);
-  document.getElementById('rtagline').textContent = CONFIG.tagline;
+  document.getElementById('rwelcome2').textContent = CONFIG.restaurantName + '!';
+  document.getElementById('rherodesc').textContent = CONFIG.heroDescription || '';
   document.getElementById('rlocation').textContent = "📍 " + (CONFIG.address || "");
   document.getElementById('call-link').href = 'tel:' + CONFIG.phoneTel;
   document.getElementById('maps-link').href = derivedMapsUrl();
   document.getElementById('ig-link').href = CONFIG.instagramUrl || '#';
   document.getElementById('wa-link').href = 'https://wa.me/' + CONFIG.whatsappNumber + '?text=' + encodeURIComponent('Hola ' + CONFIG.restaurantName + ', quiero hacer un pedido');
 
-  const avatar = document.getElementById('ravatar');
-  if (CONFIG.avatarImage){ avatar.style.backgroundImage = `url('${CONFIG.avatarImage}')`; avatar.textContent = ''; }
-  else { avatar.style.backgroundImage = ''; avatar.textContent = CONFIG.avatarEmoji || '🍔'; }
+  const logo = document.getElementById('rlogo');
+  const logoFallback = document.getElementById('rlogo-fallback');
+  if (CONFIG.avatarImage){
+    logo.src = CONFIG.avatarImage;
+    logo.classList.remove('hidden');
+    logoFallback.classList.add('hidden');
+  } else {
+    logo.classList.add('hidden');
+    logoFallback.classList.remove('hidden');
+    logoFallback.textContent = CONFIG.avatarEmoji || '🍔';
+  }
 
   const hero = document.getElementById('hero');
   const heroPattern = document.getElementById('hero-pattern');
@@ -531,15 +555,15 @@ function renderRating(){
   const el = document.getElementById('rating-chip');
   if (!CONFIG.ratingScore){ el.innerHTML = ''; return; }
   el.innerHTML = `
-    <div class="flex items-center justify-end gap-1 text-sm font-bold"><span class="brand-text">★</span>${esc(CONFIG.ratingScore)}</div>
-    <div class="text-[11px] muted">${Number(CONFIG.ratingCount||0).toLocaleString('es-CO')} opiniones</div>`;
+    <div class="flex items-center justify-end gap-1 text-sm font-bold text-white" style="text-shadow:0 1px 3px rgba(0,0,0,.7);"><span class="brand-text">★</span>${esc(CONFIG.ratingScore)}</div>
+    <div class="text-[11px]" style="color:rgba(255,255,255,.8); text-shadow:0 1px 3px rgba(0,0,0,.7);">${Number(CONFIG.ratingCount||0).toLocaleString('es-CO')} opiniones</div>`;
 }
 
 // ---------- Estado abierto/cerrado ----------
 function renderStatusBadge(){
-  const box = document.getElementById('status-chip');
+  const wrap = document.getElementById('hero-status-pills');
   const sched = CONFIG.schedule || {};
-  if (!sched.open || !sched.close){ box.innerHTML = ''; return; }
+  if (!sched.open || !sched.close){ wrap.innerHTML = ''; return; }
   const now = new Date();
   const day = now.getDay();
   const closedToday = (sched.closedDays||[]).includes(day);
@@ -547,25 +571,23 @@ function renderStatusBadge(){
   const [ch,cm] = sched.close.split(':').map(Number);
   const openMins = oh*60+om, closeMins = ch*60+cm;
   const nowMins = now.getHours()*60 + now.getMinutes();
-  let isOpen, closesInMins;
+  let isOpen;
   if (closeMins > openMins){
     isOpen = !closedToday && nowMins >= openMins && nowMins < closeMins;
-    closesInMins = closeMins - nowMins;
   } else {
     isOpen = !closedToday && (nowMins >= openMins || nowMins < closeMins);
-    closesInMins = nowMins >= openMins ? (closeMins + 1440 - nowMins) : (closeMins - nowMins);
   }
-  if (isOpen){
-    const h = Math.floor(closesInMins/60), m = closesInMins%60;
-    box.innerHTML = `
-      <div class="flex items-center gap-1.5 text-xs font-semibold" style="color:#4ade80;"><span class="w-2 h-2 rounded-full" style="background:#4ade80;"></span>ABIERTO</div>
-      <div class="text-xs mt-0.5 muted">Hoy ${esc(sched.open)} - ${esc(sched.close)}</div>
-      <div class="text-[11px] mt-0.5 muted">Cierra en ${h}h ${m}m</div>`;
-  } else {
-    box.innerHTML = `
-      <div class="flex items-center gap-1.5 text-xs font-semibold text-red-400"><span class="w-2 h-2 rounded-full bg-red-400"></span>CERRADO</div>
-      <div class="text-xs mt-0.5 muted">Hoy ${esc(sched.open)} - ${esc(sched.close)}</div>`;
-  }
+  const statusPill = isOpen
+    ? `<span class="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border" style="color:#4ade80;border-color:#4ade80;">🟢 ABIERTO</span>`
+    : `<span class="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border text-red-400" style="border-color:#f87171;">🔴 CERRADO</span>`;
+  const hoursPill = `<span class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border text-white" style="border-color:rgba(255,255,255,.35);">🕐 ${esc(sched.open)} - ${esc(sched.close)}</span>`;
+  wrap.innerHTML = statusPill + hoursPill;
+}
+
+// ---------- Elegir tipo de entrega desde la portada ----------
+function startOrder(type){
+  deliveryType = type;
+  openModal('menu-modal');
 }
 setInterval(() => { if (CONFIG) renderStatusBadge(); }, 60000);
 
@@ -934,6 +956,7 @@ function renderAdminForm(){
   const c = DRAFT.config;
   document.getElementById('adm-name').value = c.restaurantName || '';
   document.getElementById('adm-tagline').value = c.tagline || '';
+  document.getElementById('adm-hero-desc').value = c.heroDescription || '';
   document.getElementById('adm-color').value = c.brandColor || '#f5a524';
   document.getElementById('adm-avatar-emoji').value = c.avatarEmoji || '';
   document.getElementById('adm-avatar-image').value = c.avatarImage || '';
@@ -960,7 +983,7 @@ function renderAdminForm(){
   document.getElementById('adm-pin').value = c.adminPin || '1234';
 
   [
-    ['adm-name','restaurantName'], ['adm-tagline','tagline'],
+    ['adm-name','restaurantName'], ['adm-tagline','tagline'], ['adm-hero-desc','heroDescription'],
     ['adm-avatar-emoji','avatarEmoji'], ['adm-avatar-image','avatarImage'], ['adm-hero-image','heroImage'],
     ['adm-phone','phoneTel'], ['adm-whatsapp','whatsappNumber'], ['adm-address','address'],
     ['adm-instagram','instagramUrl'], ['adm-currency','currency'], ['adm-agency-name','agencyName'],
