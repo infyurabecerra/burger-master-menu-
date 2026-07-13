@@ -207,6 +207,11 @@
         <input id="cf-name" type="text" placeholder="Ej. María Rodríguez" class="w-full rounded-xl px-3 py-2 text-sm surface" style="color:var(--text);">
       </div>
 
+      <div class="mb-3">
+        <label class="text-xs font-semibold muted block mb-1">Tu teléfono</label>
+        <input id="cf-phone" type="tel" placeholder="Ej. 300 123 4567" class="w-full rounded-xl px-3 py-2 text-sm surface" style="color:var(--text);">
+      </div>
+
       <div class="text-xs font-semibold muted mb-1 uppercase tracking-wide">Métodos de pago</div>
       <div id="cf-payment-grid" class="grid grid-cols-3 gap-2 mb-4"></div>
       <div id="cf-payment-note" class="hidden text-xs rounded-xl p-3 leading-relaxed mb-3 surface muted"></div>
@@ -849,38 +854,52 @@ function updateCartTotals(){
 
 function sendOrderToWhatsApp(){
   const name = document.getElementById('cf-name').value.trim();
+  const phone = document.getElementById('cf-phone').value.trim();
   const address = document.getElementById('cf-address').value.trim();
   const method = findPaymentMethod(selectedPaymentId);
 
   if (!name){ alert('Por favor ingresa tu nombre.'); return; }
   if (deliveryType === 'delivery' && !address){ alert('Por favor ingresa la dirección de entrega.'); return; }
+  if (deliveryType === 'delivery' && !phone){ alert('Por favor ingresa tu teléfono.'); return; }
 
   const entries = Object.entries(cart);
   const subtotal = cartSubtotal();
   const packaging = packagingTotal();
   const fee = deliveryType === 'delivery' ? (CONFIG.deliveryFee||0) : 0;
   const total = subtotal + packaging + fee;
-
-  let msg = `🍔 *Nuevo pedido - ${CONFIG.restaurantName}*\n\n`;
-  msg += `Cliente: ${name}\n`;
-  msg += `Entrega: ${deliveryType === 'delivery' ? 'Delivery' : 'Retiro en el local'}\n`;
-  if (deliveryType === 'delivery') msg += `Dirección: ${address}\n`;
-  msg += `\n*Pedido:*\n`;
-  entries.forEach(([id,qty]) => {
+  const divider = '━━━━━━━━━━━━━━';
+  const itemLines = entries.map(([id,qty]) => {
     const item = findItem(id);
-    if (!item) return;
-    msg += `• ${qty}x ${item.name} - ${fmt(item.price*qty)}\n`;
-  });
-  msg += `\nSubtotal: ${fmt(subtotal)}\n`;
-  if (packaging > 0) msg += `${CONFIG.packagingLabel||'Empaque'} (${cartCount()} x ${fmt(CONFIG.packagingFee||0)}): ${fmt(packaging)}\n`;
-  msg += `Delivery: ${fee===0?'Gratis':fmt(fee)}\n*Total: ${fmt(total)}*\n\n`;
+    return item ? `• ${qty} × ${item.name} — ${fmt(item.price*qty)}` : '';
+  }).filter(Boolean).join('\n');
+  const paymentLines = (!method || method.isCash)
+    ? `💳 Pago: Contra entrega`
+    : `💳 Pago: ${method.label}\n${method.label}: ${method.number}\n_Enviaré el comprobante por este mismo chat._`;
 
-  if (!method || method.isCash){
-    msg += `💵 *Pago: ${method ? method.label : 'Efectivo'}*\n`;
+  let msg;
+  if (deliveryType === 'delivery'){
+    msg = `🍔 NUEVO PEDIDO DOMICILIO\n\n`;
+    msg += `👤 Cliente: ${name}\n`;
+    msg += `📍 Dirección: ${address}\n`;
+    msg += `${divider}\n`;
+    msg += `🛒 Pedido\n${itemLines}\n`;
+    msg += `${divider}\n`;
+    if (packaging > 0) msg += `🥤 ${CONFIG.packagingLabel||'Caja para llevar'}: ${cartCount()} × ${fmt(CONFIG.packagingFee||0)}\n`;
+    msg += `💰 Subtotal: ${fmt(subtotal)}\n`;
+    msg += `🚚 Domicilio: ${fmt(fee)}\n\n`;
+    msg += `💵 TOTAL: ${fmt(total)}\n\n`;
+    msg += `${divider}\n\n`;
+    msg += `${paymentLines}\n`;
+    msg += `📞 Teléfono:\n${phone}`;
   } else {
-    msg += `💳 *Pago: ${method.label}*\n${method.label}: ${method.number}\n_Enviaré el comprobante por este mismo chat._\n`;
+    msg = `🛍️ NUEVO PEDIDO PARA RETIRAR\n\n`;
+    msg += `👤 Cliente: ${name}\n`;
+    if (phone) msg += `📞 Teléfono: ${phone}\n`;
+    msg += `\n🍔 Pedido\n${itemLines}\n`;
+    if (packaging > 0) msg += `\n🥤 ${CONFIG.packagingLabel||'Caja para llevar'}: ${cartCount()} × ${fmt(CONFIG.packagingFee||0)}\n`;
+    msg += `\n${paymentLines}\n`;
+    msg += `\n💰 Total: ${fmt(total)}`;
   }
-  msg += `\n_Pedido generado desde la tarjeta digital_`;
 
   const url = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
   window.open(url, '_blank');
