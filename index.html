@@ -361,6 +361,12 @@
         <div class="admin-field col-span-2"><label>Link de contacto de tu agencia</label><input id="adm-agency-url" placeholder="https://wa.me/..."></div>
         <div class="admin-field col-span-2" id="adm-pin-wrap"><label>PIN de administrador (modo demo)</label><input id="adm-pin" inputmode="numeric"></div>
       </div>
+
+      <div id="adm-reset-wrap" class="hidden">
+        <div class="admin-section-title">Modo demo</div>
+        <p class="text-[11px] text-gray-500 mb-2">Si este dispositivo quedó con una versión vieja guardada y no se actualiza con los últimos cambios de la plantilla, usa esto para reiniciarlo a los valores más recientes (perderás lo que hayas editado desde aquí).</p>
+        <button onclick="admFactoryReset()" class="text-xs font-semibold text-red-500">🗑️ Restablecer este dispositivo a los valores más recientes</button>
+      </div>
     </div>
 
     <div class="sticky bottom-0 glass p-4" style="border-top:1px solid var(--border);">
@@ -977,8 +983,19 @@ function openAdmin(){
   DRAFT.config.schedule = DRAFT.config.schedule || { open: '10:00', close: '23:00', closedDays: [] };
   DRAFT.config.promo = DRAFT.config.promo || { enabled: false, title: '', desc: '', price: 0, image: '' };
   document.getElementById('adm-pin-wrap').classList.toggle('hidden', firebaseEnabled);
+  document.getElementById('adm-reset-wrap').classList.toggle('hidden', firebaseEnabled);
   renderAdminForm();
   openModal('admin-modal');
+}
+
+function admFactoryReset(){
+  if (!confirm('Esto borra lo guardado en este dispositivo y vuelve a cargar la versión más reciente de la plantilla. ¿Continuar?')) return;
+  localStorage.removeItem(LS_KEY);
+  CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+  MENU = JSON.parse(JSON.stringify(DEFAULT_MENU));
+  cart = {};
+  closeModal('admin-modal');
+  renderAll();
 }
 
 function renderAdminForm(){
