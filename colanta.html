@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Colanta | Pedidos para tiendas</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --brand:#3FA535; --brand-dark:#1F6B1A; --brand-light:#EAF6E4;
+    --bg:#F6F8F4; --surface:#ffffff; --border:#e7ece3; --text:#1f2a1c; --muted:#6b7566;
+  }
+  body{ font-family:'Poppins',sans-serif; }
+  .font-display{ font-family:'Fredoka',sans-serif; }
+  .fade-in{ animation:fadeIn .5s ease-in-out; }
+  @keyframes fadeIn{ from{opacity:0;transform:translateY(12px);} to{opacity:1;transform:translateY(0);} }
+  .modal-scroll{ max-height:82vh; overflow-y:auto; }
+  ::-webkit-scrollbar{ width:6px; }
+  ::-webkit-scrollbar-thumb{ background:var(--brand); border-radius:10px; }
+
+  .brand-grad{ background:linear-gradient(135deg, var(--brand), var(--brand-dark)); }
+  .brand-bg{ background:var(--brand); }
+  .brand-text{ color:var(--brand); }
+  .brand-border{ border-color:var(--brand); }
+  .surface{ background:var(--surface); border:1px solid var(--border); }
+  .muted{ color:var(--muted); }
+  .icon-circle{ box-shadow:0 2px 8px rgba(0,0,0,.08); transition:.2s ease; }
+  .icon-circle:hover{ transform:translateY(-2px); }
+
+  .tab-view{ display:none; }
+  .tab-view.active{ display:block; }
+  .navbtn{ display:flex; flex-direction:column; align-items:center; gap:2px; flex:1; padding:.4rem 0; color:var(--muted); }
+  .navbtn.active{ color:var(--brand); }
+  .navbtn .navicon{ font-size:1.35rem; }
+  .navbtn .navlabel{ font-size:10px; font-weight:600; }
+
+  .variant-pill{ font-size:11px; font-weight:600; padding:.35rem .65rem; border-radius:9999px; border:1px solid var(--border); color:var(--muted); background:#fff; }
+  .variant-pill.active{ background:var(--brand); color:#fff; border-color:var(--brand); }
+  .qty-btn{ width:28px; height:28px; border-radius:8px; border:1px solid var(--border); font-weight:700; display:flex; align-items:center; justify-content:center; background:#fff; }
+</style>
+</head>
+<body class="bg-gradient-to-br from-green-50 to-emerald-100 flex justify-center sm:items-center min-h-screen sm:p-4">
+
+<div class="w-full sm:max-w-sm sm:rounded-3xl sm:shadow-xl overflow-hidden fade-in relative min-h-screen sm:min-h-0 flex flex-col" style="background:var(--bg); color:var(--text);">
+
+  <button onclick="openModal('install-modal')" title="Instalar" class="absolute top-4 left-4 z-20 text-white bg-black/25 p-2 rounded-full hover:bg-black/40 transition">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
+  </button>
+  <button onclick="openShareModal()" title="Compartir" class="absolute top-4 right-4 z-20 text-white bg-black/25 p-2 rounded-full hover:bg-black/40 transition">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342a4 4 0 100-2.684m0 2.684a4 4 0 100-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a4 4 0 105.367-5.367 4 4 0 00-5.367 5.367zm0 6.684a4 4 0 105.367 5.367 4 4 0 00-5.367-5.367z"/></svg>
+  </button>
+
+  <!-- Contenido que se desplaza -->
+  <div class="flex-grow overflow-y-auto pb-20">
+
+    <!-- ============ TAB: INICIO ============ -->
+    <div id="tab-inicio" class="tab-view active">
+      <div class="relative h-40 brand-grad flex items-end justify-center overflow-hidden">
+        <div class="absolute inset-0 opacity-20 text-6xl flex flex-wrap gap-3 p-2 select-none">🥛🧀🐄🥛🧈🐄🥛🧀</div>
+      </div>
+
+      <div class="px-6 -mt-12 relative">
+        <div id="ravatar" class="w-20 h-20 mx-auto rounded-2xl surface flex items-center justify-center text-4xl overflow-hidden shadow-lg bg-cover bg-center">🐄</div>
+        <h1 id="rname" class="mt-3 text-2xl font-display font-bold text-center"></h1>
+        <p id="rtagline" class="text-sm muted text-center mt-0.5"></p>
+      </div>
+
+      <div class="flex items-start justify-between px-6 mt-4 gap-3">
+        <button id="status-chip" onclick="showTab('contacto')" class="text-left rounded-xl px-3 py-2 surface"></button>
+        <div id="rating-chip" class="text-right pt-1"></div>
+      </div>
+
+      <div class="px-6 mt-5">
+        <div class="brand-grad rounded-2xl p-5 text-white">
+          <h2 class="font-display font-bold text-xl">Bienvenido a <span id="welcome-name"></span></h2>
+          <p class="text-sm text-white/85 mt-1">¿Qué necesitas pedir hoy para tu tienda?</p>
+          <button onclick="showTab('catalogo')" class="mt-4 bg-white text-sm font-bold px-4 py-2 rounded-full" style="color:var(--brand-dark);">Ver catálogo →</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3 mt-5 px-6 text-center">
+        <a id="wa-link" href="#" target="_blank" class="flex flex-col items-center">
+          <div class="icon-circle w-14 h-14 rounded-full flex items-center justify-center text-2xl text-white" style="background:#22c55e;">💬</div>
+          <span class="text-[11px] font-medium mt-1.5">WhatsApp</span>
+        </a>
+        <a id="call-link" href="#" class="flex flex-col items-center">
+          <div class="icon-circle w-14 h-14 rounded-full flex items-center justify-center text-2xl text-white brand-bg">📞</div>
+          <span class="text-[11px] font-medium mt-1.5">Llamar</span>
+        </a>
+        <a id="maps-link" href="#" target="_blank" class="flex flex-col items-center">
+          <div class="icon-circle w-14 h-14 rounded-full flex items-center justify-center text-2xl text-white" style="background:#ef4444;">📍</div>
+          <span class="text-[11px] font-medium mt-1.5">Ubicación</span>
+        </a>
+      </div>
+
+      <div class="px-6 mt-6">
+        <div id="promo-banner"></div>
+      </div>
+
+      <div class="px-6 mt-6 pb-2">
+        <h2 class="font-display font-bold text-sm tracking-wide muted uppercase">Categorías</h2>
+        <div id="home-cats" class="grid grid-cols-2 gap-3 mt-3"></div>
+      </div>
+    </div>
+
+    <!-- ============ TAB: CATÁLOGO ============ -->
+    <div id="tab-catalogo" class="tab-view">
+      <div class="sticky top-0 z-10 px-5 py-4 surface">
+        <h2 class="font-display font-bold text-lg">Catálogo</h2>
+        <div class="flex gap-2 mt-3 overflow-x-auto pb-1" id="cat-pills"></div>
+      </div>
+      <div class="px-5" id="catalog-list"></div>
+    </div>
+
+    <!-- ============ TAB: PROMOS ============ -->
+    <div id="tab-promos" class="tab-view">
+      <div class="px-5 py-4">
+        <h2 class="font-display font-bold text-lg">Promociones</h2>
+        <div class="mt-3" id="promos-list"></div>
+      </div>
+    </div>
+
+    <!-- ============ TAB: CONTACTO ============ -->
+    <div id="tab-contacto" class="tab-view">
+      <div class="px-5 py-4">
+        <h2 class="font-display font-bold text-lg mb-4">Contacto</h2>
+
+        <div class="surface rounded-2xl p-4 mb-3">
+          <h3 class="font-semibold text-sm mb-2">🕒 Horario de atención</h3>
+          <div id="hours-list" class="space-y-2 text-sm"></div>
+        </div>
+
+        <div class="surface rounded-2xl p-4 mb-3">
+          <h3 class="font-semibold text-sm mb-1">📍 Ubicación</h3>
+          <p id="rlocation" class="text-sm muted"></p>
+        </div>
+
+        <a id="wa-link-2" href="#" target="_blank" class="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-2xl py-3.5 mb-3">
+          💬 Escríbenos por WhatsApp
+        </a>
+        <button onclick="downloadVCard()" class="w-full flex items-center justify-center gap-2 surface font-semibold rounded-2xl py-3">
+          💾 Guardar contacto
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ BARRA FLOTANTE DE PEDIDO ============ -->
+  <div id="order-bar-wrap" class="hidden absolute left-0 right-0 z-20" style="bottom:64px;">
+    <div class="px-4">
+      <button onclick="openCartModal()" class="w-full flex items-center justify-between brand-grad text-white rounded-2xl px-4 py-3 shadow-lg">
+        <span class="text-sm font-semibold" id="order-bar-text"></span>
+        <span class="text-sm font-bold bg-white/20 px-3 py-1 rounded-lg">Ver pedido →</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ BARRA INFERIOR ============ -->
+  <div class="flex items-stretch surface" style="border-top:1px solid var(--border);">
+    <button class="navbtn active" data-tab="inicio" onclick="showTab('inicio')">
+      <span class="navicon">🏠</span><span class="navlabel">Inicio</span>
+    </button>
+    <button class="navbtn" data-tab="catalogo" onclick="showTab('catalogo')">
+      <span class="navicon">📋</span><span class="navlabel">Catálogo</span>
+    </button>
+    <button class="navbtn" data-tab="promos" onclick="showTab('promos')">
+      <span class="navicon">🏷️</span><span class="navlabel">Promos</span>
+    </button>
+    <button class="navbtn" data-tab="contacto" onclick="showTab('contacto')">
+      <span class="navicon">☎️</span><span class="navlabel">Contacto</span>
+    </button>
+  </div>
+</div>
+
+<!-- ============ MODAL: CARRITO / PEDIDO ============ -->
+<div id="cart-modal" class="fixed inset-0 bg-black/50 hidden items-end sm:items-center justify-center z-40">
+  <div class="w-full sm:max-w-sm sm:rounded-3xl rounded-t-3xl modal-scroll relative p-5" style="background:var(--surface);">
+    <button onclick="closeModal('cart-modal')" class="absolute top-4 right-4 muted hover:text-red-500 text-xl">✕</button>
+    <h2 class="font-bold mb-3">Tu pedido</h2>
+
+    <div id="cart-empty" class="text-center text-sm muted py-8">Aún no has agregado productos</div>
+
+    <div id="cart-body" class="hidden">
+      <div id="cart-lines" class="mb-3"></div>
+      <div class="flex justify-between font-bold text-base pt-2 mb-4" style="border-top:1px solid var(--border);"><span>Total</span><span id="cart-total">$0</span></div>
+
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <button id="dt-delivery" onclick="selectDeliveryType('delivery')" class="rounded-2xl p-3 text-center surface">
+          <div class="text-3xl mb-1">🚚</div>
+          <div class="font-bold text-xs">Domicilio</div>
+        </button>
+        <button id="dt-pickup" onclick="selectDeliveryType('pickup')" class="rounded-2xl p-3 text-center surface">
+          <div class="text-3xl mb-1">🏬</div>
+          <div class="font-bold text-xs">Recojo en bodega</div>
+        </button>
+      </div>
+
+      <div class="space-y-3 mb-4">
+        <div>
+          <label class="text-xs font-semibold muted block mb-1">Nombre de la tienda / negocio</label>
+          <input id="cf-store" type="text" placeholder="Ej. Tienda La Esquina" class="w-full rounded-xl px-3 py-2 text-sm surface">
+        </div>
+        <div>
+          <label class="text-xs font-semibold muted block mb-1">Persona de contacto</label>
+          <input id="cf-name" type="text" placeholder="Ej. Juan Pérez" class="w-full rounded-xl px-3 py-2 text-sm surface">
+        </div>
+        <div>
+          <label class="text-xs font-semibold muted block mb-1">Teléfono</label>
+          <input id="cf-phone" type="tel" placeholder="Ej. 300 123 4567" class="w-full rounded-xl px-3 py-2 text-sm surface">
+        </div>
+        <div id="cf-address-wrap">
+          <label class="text-xs font-semibold muted block mb-1">Dirección de la tienda</label>
+          <input id="cf-address" type="text" placeholder="Calle, barrio, referencia" class="w-full rounded-xl px-3 py-2 text-sm surface">
+        </div>
+      </div>
+
+      <button onclick="sendOrderToWhatsApp()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold rounded-2xl py-3.5 flex items-center justify-center gap-2 transition">
+        ✅ Enviar pedido por WhatsApp
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: COMPARTIR / QR ============ -->
+<div id="share-modal" class="fixed inset-0 bg-black/50 hidden items-end sm:items-center justify-center z-30">
+  <div class="w-full sm:max-w-sm sm:rounded-3xl rounded-t-3xl relative p-6 text-center" style="background:var(--surface);">
+    <button onclick="closeModal('share-modal')" class="absolute top-4 right-4 muted hover:text-red-500 text-xl">✕</button>
+    <h2 class="font-bold mb-4">🔗 Comparte esta tarjeta</h2>
+    <img id="qr-img" class="mx-auto rounded-xl border" width="180" height="180" alt="Código QR">
+    <button onclick="copyLink()" class="mt-4 w-full surface hover:opacity-80 rounded-xl py-2.5 text-sm font-semibold">Copiar link</button>
+  </div>
+</div>
+
+<!-- ============ MODAL: INSTALAR ============ -->
+<div id="install-modal" class="fixed inset-0 bg-black/50 hidden items-end sm:items-center justify-center z-30">
+  <div class="w-full sm:max-w-sm sm:rounded-3xl rounded-t-3xl relative p-6" style="background:var(--surface);">
+    <button onclick="closeModal('install-modal')" class="absolute top-4 right-4 muted hover:text-red-500 text-xl">✕</button>
+    <h2 class="font-bold mb-4">📲 Instalar esta tarjeta</h2>
+    <p class="text-sm muted mb-3"><b>En iPhone (Safari):</b> toca compartir ⬆️ y elige "Agregar a pantalla de inicio".</p>
+    <p class="text-sm muted"><b>En Android (Chrome):</b> toca los tres puntos ⋮ y elige "Agregar a pantalla de inicio".</p>
+  </div>
+</div>
+
+<script>
+// ============================================
+// DATOS — edítalos aquí. Precios tomados del catálogo de WhatsApp.
+// ============================================
+const CONFIG = {
+  businessName: "Colanta",
+  tagline: "Sabe más, sabe a campo",
+  avatarImage: "",
+  phoneTel: "+573000000000",
+  whatsappNumber: "573000000000",
+  address: "Ingresa la dirección de la distribuidora",
+  ratingScore: "5.0",
+  ratingCount: 0,
+  schedule: { open: "07:00", close: "17:00", closedDays: [0] },
+  hours: [
+    { day: "Lunes a viernes", time: "7:00 am – 5:00 pm" },
+    { day: "Sábado", time: "7:00 am – 1:00 pm" },
+    { day: "Domingo", time: "Cerrado" }
+  ],
+  promo: {
+    enabled: true,
+    title: "Maxilitro Entera x12",
+    desc: "Pide 5 cajas o más y baja el precio por caja",
+    price: 52200,
+    image: ""
+  },
+  agencyName: "",
+  agencyUrl: ""
+};
+
+// Cada producto tiene una o más "presentaciones" (unidad, sixpack, caja).
+// Cada presentación puede tener varios escalones de precio según cantidad (tiers).
+const CATALOG = {
+  "Maxilitro Entera": [
+    {
+      id: "max-ent", name: "Leche Maxilitro Entera", desc: "Leche entera larga vida, presentación Maxilitro", emoji: "🥛", bg: "#DCEDC8", image: "",
+      variants: [
+        { id: "und", label: "Unidad", unitLabel: "und", tiers: [{ minQty: 1, price: 5150 }] },
+        { id: "six", label: "Sixpack x6 (confirmar precio)", unitLabel: "sixpack", tiers: [{ minQty: 1, price: 29500 }] },
+        { id: "caja", label: "Caja x12", unitLabel: "caja", tiers: [{ minQty: 1, price: 56400 }, { minQty: 5, price: 52200 }] }
+      ]
+    }
+  ],
+  "Maxilitro Deslactosada": [
+    {
+      id: "max-des", name: "Leche Maxilitro Deslactosada", desc: "Leche deslactosada larga vida, presentación Maxilitro", emoji: "🥛", bg: "#DCEDC8", image: "",
+      variants: [
+        { id: "und", label: "Unidad", unitLabel: "und", tiers: [{ minQty: 1, price: 5150 }] },
+        { id: "caja", label: "Caja x12", unitLabel: "caja", tiers: [{ minQty: 1, price: 56400 }] }
+      ]
+    }
+  ],
+  "Leche Líquida": [
+    { id: "lq-200", name: "Leche Entera x200ml", desc: "Bolsa 200ml. No tiene cambio por fecha de vencimiento.", emoji: "🥛", bg: "#E8F5E9", image: "",
+      variants: [{ id: "und", label: "Unidad", unitLabel: "und", tiers: [{ minQty: 1, price: 1200 }] }] },
+    { id: "lq-tetra200", name: "Leche en Caja (Tetra) x200ml", desc: "No tiene cambio por fecha de vencimiento.", emoji: "🥛", bg: "#E8F5E9", image: "",
+      variants: [{ id: "und", label: "Unidad", unitLabel: "und", tiers: [{ minQty: 1, price: 1800 }] }] },
+    { id: "lq-400", name: "Leche Entera x400ml", desc: "Bolsa 400ml. No tiene cambio por fecha de vencimiento.", emoji: "🥛", bg: "#E8F5E9", image: "",
+      variants: [{ id: "und", label: "Unidad", unitLabel: "und", tiers: [{ minQty: 1, price: 2000 }] }] }
+  ],
+  "Leche en Polvo": [
+    { id: "lp-200", name: "Leche en Polvo Entera x200g", desc: "No tiene cambio por fecha de vencimiento.", emoji: "🥣", bg: "#F1F8E9", image: "",
+      variants: [{ id: "und", label: "Unidad", unitLabel: "und", tiers: [{ minQty: 1, price: 7500 }] }] },
+    { id: "lp-380e", name: "Leche en Polvo Entera x380g", desc: "No tiene cambio por fecha de vencimiento.", emoji: "🥣", bg: "#F1F8E9", image: "",
+      variants: [{ id: "und", label: "Unidad", unitLabel: "und", tiers: [{ minQty: 1, price: 13500 }] }] },
+    { id: "lp-380d", name: "Leche en Polvo Deslactosada x380g", desc: "No tiene cambio por fecha de vencimiento.", emoji: "🥣", bg: "#F1F8E9", image: "",
+      variants: [{ id: "und", label: "Unidad", unitLabel: "und", tiers: [{ minQty: 1, price: 15600 }] }] },
+    { id: "lp-380m", name: "Leche en Polvo Montefrío x380g", desc: "No tiene cambio por fecha de vencimiento.", emoji: "🥣", bg: "#F1F8E9", image: "",
+      variants: [{ id: "und", label: "Unidad", unitLabel: "und", tiers: [{ minQty: 1, price: 12300 }] }] },
+    { id: "lp-900", name: "Leche en Polvo x900g", desc: "No tiene cambio por fecha de vencimiento.", emoji: "🥣", bg: "#F1F8E9", image: "",
+      variants: [{ id: "und", label: "Unidad", unitLabel: "und", tiers: [{ minQty: 1, price: 30600 }] }] },
+    { id: "lp-ristra", name: "Ristra Leche en Polvo x12u", desc: "12 sobres de 25g c/u. No tiene cambio por fecha de vencimiento.", emoji: "🥣", bg: "#F1F8E9", image: "",
+      variants: [{ id: "und", label: "Unidad", unitLabel: "ristra", tiers: [{ minQty: 1, price: 12600 }] }] }
+  ]
+};
+
+let cart = [];
+let deliveryType = 'delivery';
+let selection = {}; // productId -> { variantId, qty }
+
+// ---------- Utilidades ----------
+function esc(str){
+  return String(str ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+function fmt(n){ return "$" + Math.round(n).toLocaleString('es-CO'); }
+function findProduct(id){
+  for (const cat in CATALOG){
+    const found = CATALOG[cat].find(p => p.id === id);
+    if (found) return found;
+  }
+}
+function derivedMapsUrl(){
+  return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(CONFIG.address || CONFIG.businessName);
+}
+
+// ---------- Tabs ----------
+function showTab(name){
+  document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.navbtn').forEach(el => el.classList.toggle('active', el.dataset.tab === name));
+  document.querySelector('.flex-grow').scrollTo(0,0);
+}
+
+// ---------- Modales ----------
+function openModal(id){ document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
+function closeModal(id){ document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
+
+// ---------- Encabezado ----------
+function initHeader(){
+  document.getElementById('rname').textContent = CONFIG.businessName;
+  document.getElementById('rtagline').textContent = CONFIG.tagline;
+  document.getElementById('welcome-name').textContent = CONFIG.businessName;
+  document.getElementById('rlocation').textContent = "📍 " + (CONFIG.address || "");
+  document.getElementById('call-link').href = 'tel:' + CONFIG.phoneTel;
+  document.getElementById('maps-link').href = derivedMapsUrl();
+  const waHref = 'https://wa.me/' + CONFIG.whatsappNumber + '?text=' + encodeURIComponent('Hola ' + CONFIG.businessName + ', quiero hacer un pedido');
+  document.getElementById('wa-link').href = waHref;
+  document.getElementById('wa-link-2').href = waHref;
+
+  const avatar = document.getElementById('ravatar');
+  if (CONFIG.avatarImage){ avatar.style.backgroundImage = `url('${CONFIG.avatarImage}')`; avatar.textContent = ''; }
+  else { avatar.style.backgroundImage = ''; avatar.textContent = '🐄'; }
+
+  renderRating();
+  renderStatusBadge();
+  renderPromo();
+  renderHomeCats();
+}
+
+function renderRating(){
+  const el = document.getElementById('rating-chip');
+  if (!CONFIG.ratingScore){ el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div class="flex items-center justify-end gap-1 text-sm font-bold"><span class="brand-text">★</span>${esc(CONFIG.ratingScore)}</div>
+    <div class="text-[11px] muted">${Number(CONFIG.ratingCount||0).toLocaleString('es-CO')} reseñas</div>`;
+}
+
+function renderStatusBadge(){
+  const box = document.getElementById('status-chip');
+  const sched = CONFIG.schedule || {};
+  if (!sched.open || !sched.close){ box.innerHTML = ''; return; }
+  const now = new Date();
+  const day = now.getDay();
+  const closedToday = (sched.closedDays||[]).includes(day);
+  const [oh,om] = sched.open.split(':').map(Number);
+  const [ch,cm] = sched.close.split(':').map(Number);
+  const openMins = oh*60+om, closeMins = ch*60+cm;
+  const nowMins = now.getHours()*60 + now.getMinutes();
+  const isOpen = !closedToday && nowMins >= openMins && nowMins < closeMins;
+  if (isOpen){
+    box.innerHTML = `
+      <div class="flex items-center gap-1.5 text-xs font-semibold" style="color:#16a34a;"><span class="w-2 h-2 rounded-full" style="background:#16a34a;"></span>ABIERTO</div>
+      <div class="text-xs mt-0.5 muted">Hoy ${esc(sched.open)} - ${esc(sched.close)}</div>`;
+  } else {
+    box.innerHTML = `
+      <div class="flex items-center gap-1.5 text-xs font-semibold text-red-500"><span class="w-2 h-2 rounded-full bg-red-500"></span>CERRADO</div>
+      <div class="text-xs mt-0.5 muted">Hoy ${esc(sched.open)} - ${esc(sched.close)}</div>`;
+  }
+}
+
+function renderPromo(){
+  const wrap = document.getElementById('promo-banner');
+  const p = CONFIG.promo;
+  if (!p || !p.enabled || !p.title){ wrap.innerHTML = ''; return; }
+  const bgStyle = p.image
+    ? `background-image:linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.65)), url('${esc(p.image)}'); background-size:cover; background-position:center;`
+    : `background:linear-gradient(135deg, #F9A825, #F57F17);`;
+  wrap.innerHTML = `
+    <div class="rounded-2xl p-4 min-h-[110px] flex flex-col justify-end text-white" style="${bgStyle}">
+      <div class="text-[11px] font-bold">🏷️ PROMOCIÓN DEL MES</div>
+      <div class="font-display font-bold text-lg mt-0.5">${esc(p.title)}</div>
+      ${p.desc ? `<div class="text-xs mt-0.5 text-white/90">${esc(p.desc)}</div>` : ''}
+      <div class="font-bold text-lg mt-1">${fmt(p.price||0)}</div>
+    </div>`;
+}
+
+function renderHomeCats(){
+  const wrap = document.getElementById('home-cats');
+  wrap.innerHTML = Object.keys(CATALOG).map(cat => `
+    <button onclick="showTab('catalogo'); setTimeout(()=>scrollToCat('${esc(cat).replace(/'/g,"\\'")}'), 50);" class="surface rounded-2xl p-3 text-left">
+      <div class="text-2xl">🥛</div>
+      <div class="text-xs font-semibold mt-1">${esc(cat)}</div>
+    </button>`).join('');
+}
+
+// ---------- Catálogo ----------
+function slugify(s){ return String(s).replace(/\s+/g,'-').replace(/[^\w-]/g,''); }
+
+function renderCatPills(){
+  const cats = Object.keys(CATALOG);
+  document.getElementById('cat-pills').innerHTML = cats.map((c,i) => `
+    <button class="flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full ${i===0 ? 'brand-bg text-white' : 'muted surface'}" data-cat="${esc(c)}" onclick="scrollToCat('${esc(c).replace(/'/g,"\\'")}', this)">${esc(c)}</button>
+  `).join('');
+}
+function scrollToCat(cat, btn){
+  document.querySelectorAll('#cat-pills button').forEach(b => b.className = "flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full muted surface");
+  if (btn) btn.className = "flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full brand-bg text-white";
+  const el = document.getElementById('sec-'+slugify(cat));
+  if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function getSelection(productId, product){
+  if (!selection[productId]) selection[productId] = { variantId: product.variants[0].id, qty: 1 };
+  return selection[productId];
+}
+function currentVariant(product, sel){
+  return product.variants.find(v => v.id === sel.variantId) || product.variants[0];
+}
+function tierPriceFor(variant, qty){
+  let price = variant.tiers[0].price;
+  for (const t of variant.tiers) if (qty >= t.minQty) price = t.price;
+  return price;
+}
+function nextTierHint(variant, qty){
+  const next = [...variant.tiers].reverse().find(t => t.minQty > qty);
+  if (!next) return '';
+  return `Pide ${next.minQty}+ ${variant.unitLabel} y paga ${fmt(next.price)} c/u`;
+}
+
+function renderCatalog(){
+  const wrap = document.getElementById('catalog-list');
+  wrap.innerHTML = '';
+  for (const cat in CATALOG){
+    const section = document.createElement('div');
+    section.id = 'sec-' + slugify(cat);
+    section.className = 'mt-4';
+    section.innerHTML = `<h3 class="text-xs uppercase tracking-wide muted font-semibold mb-2 pt-2">${esc(cat)}</h3>`;
+    CATALOG[cat].forEach(product => {
+      section.appendChild(renderProductCard(product));
+    });
+    wrap.appendChild(section);
+  }
+  renderCatPills();
+}
+
+function renderProductCard(product){
+  const sel = getSelection(product.id, product);
+  const variant = currentVariant(product, sel);
+  const unitPrice = tierPriceFor(variant, sel.qty);
+  const hint = nextTierHint(variant, sel.qty);
+
+  const row = document.createElement('div');
+  row.className = 'surface rounded-2xl p-3 mb-3';
+  row.id = 'card-' + product.id;
+
+  const thumb = product.image
+    ? `<img src="${esc(product.image)}" class="w-16 h-16 rounded-xl object-cover flex-shrink-0" alt="${esc(product.name)}">`
+    : `<div class="w-16 h-16 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style="background:${esc(product.bg||'#EAF6E4')}">${product.emoji||'🥛'}</div>`;
+
+  row.innerHTML = `
+    <div class="flex gap-3">
+      ${thumb}
+      <div class="flex-1 min-w-0">
+        <div class="font-semibold text-sm">${esc(product.name)}</div>
+        <div class="text-xs muted mt-0.5">${esc(product.desc)}</div>
+      </div>
+    </div>
+    ${product.variants.length > 1 ? `
+    <div class="flex gap-2 mt-3 flex-wrap" data-role="variants">
+      ${product.variants.map(v => `<button class="variant-pill ${v.id===sel.variantId?'active':''}" data-variant="${esc(v.id)}">${esc(v.label)}</button>`).join('')}
+    </div>` : ''}
+    <div class="flex items-center justify-between mt-3">
+      <div class="flex items-center gap-2">
+        <button class="qty-btn" data-role="minus">−</button>
+        <span class="text-sm font-bold w-6 text-center" data-role="qty">${sel.qty}</span>
+        <button class="qty-btn" data-role="plus">+</button>
+        <span class="text-[11px] muted">${esc(variant.unitLabel)}${sel.qty>1?'s':''}</span>
+      </div>
+      <button data-role="add" class="brand-bg text-white text-xs font-bold px-3 py-2 rounded-xl uppercase">Agregar</button>
+    </div>
+    <div class="flex items-center justify-between mt-2">
+      <div class="font-bold brand-text" data-role="price">${fmt(unitPrice)} c/u</div>
+      <div class="text-[11px] font-semibold text-orange-600" data-role="hint">${esc(hint)}</div>
+    </div>
+  `;
+
+  row.querySelectorAll('[data-variant]').forEach(btn => {
+    btn.onclick = () => { sel.variantId = btn.dataset.variant; sel.qty = 1; updateProductCard(product); };
+  });
+  row.querySelector('[data-role="minus"]').onclick = () => { sel.qty = Math.max(1, sel.qty - 1); updateProductCard(product); };
+  row.querySelector('[data-role="plus"]').onclick = () => { sel.qty += 1; updateProductCard(product); };
+  row.querySelector('[data-role="add"]').onclick = () => addToCart(product);
+
+  return row;
+}
+
+function updateProductCard(product){
+  const old = document.getElementById('card-' + product.id);
+  const fresh = renderProductCard(product);
+  old.replaceWith(fresh);
+}
+
+function addToCart(product){
+  const sel = getSelection(product.id, product);
+  const variant = currentVariant(product, sel);
+  const unitPrice = tierPriceFor(variant, sel.qty);
+  cart.push({
+    productId: product.id,
+    productName: product.name,
+    variantLabel: variant.label,
+    unitLabel: variant.unitLabel,
+    qty: sel.qty,
+    unitPrice,
+    lineTotal: unitPrice * sel.qty
+  });
+  updateOrderBar();
+  const card = document.getElementById('card-' + product.id);
+  card.style.outline = '2px solid var(--brand)';
+  setTimeout(() => { card.style.outline = 'none'; }, 400);
+}
+
+function cartTotal(){ return cart.reduce((s,l) => s + l.lineTotal, 0); }
+function cartCount(){ return cart.reduce((s,l) => s + l.qty, 0); }
+
+function updateOrderBar(){
+  const wrap = document.getElementById('order-bar-wrap');
+  if (cart.length === 0){ wrap.classList.add('hidden'); return; }
+  wrap.classList.remove('hidden');
+  document.getElementById('order-bar-text').textContent = `${cart.length} producto${cart.length===1?'':'s'} · ${fmt(cartTotal())}`;
+}
+
+// ---------- Promos tab ----------
+function renderPromosTab(){
+  const wrap = document.getElementById('promos-list');
+  const p = CONFIG.promo;
+  if (!p || !p.enabled || !p.title){ wrap.innerHTML = '<p class="text-sm muted">No hay promociones activas por ahora.</p>'; return; }
+  const bgStyle = p.image
+    ? `background-image:linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.65)), url('${esc(p.image)}'); background-size:cover; background-position:center;`
+    : `background:linear-gradient(135deg, #F9A825, #F57F17);`;
+  wrap.innerHTML = `
+    <div class="rounded-2xl p-5 min-h-[160px] flex flex-col justify-end text-white" style="${bgStyle}">
+      <div class="text-xs font-bold">🏷️ PROMOCIÓN DEL MES</div>
+      <div class="font-display font-bold text-2xl mt-1">${esc(p.title)}</div>
+      ${p.desc ? `<div class="text-sm mt-1 text-white/90">${esc(p.desc)}</div>` : ''}
+      <div class="font-bold text-2xl mt-2">${fmt(p.price||0)}</div>
+    </div>
+    <button onclick="showTab('catalogo')" class="w-full mt-3 brand-grad text-white font-bold rounded-2xl py-3">Ir al catálogo →</button>
+  `;
+}
+
+// ---------- Horario ----------
+function renderHours(){
+  const el = document.getElementById('hours-list');
+  el.innerHTML = (CONFIG.hours||[]).map(h => `
+    <div class="flex justify-between pb-2" style="border-bottom:1px solid var(--border);">
+      <span class="muted">${esc(h.day)}</span>
+      <span class="font-semibold">${esc(h.time)}</span>
+    </div>`).join('');
+}
+
+// ---------- Carrito / checkout ----------
+function openCartModal(){
+  openModal('cart-modal');
+  applyDeliveryUI();
+  renderCart();
+}
+function applyDeliveryUI(){
+  document.getElementById('dt-delivery').style.outline = deliveryType==='delivery' ? '2px solid var(--brand)' : 'none';
+  document.getElementById('dt-pickup').style.outline = deliveryType==='pickup' ? '2px solid var(--brand)' : 'none';
+  document.getElementById('cf-address-wrap').style.display = deliveryType === 'delivery' ? 'block' : 'none';
+}
+function selectDeliveryType(type){ deliveryType = type; applyDeliveryUI(); }
+
+function renderCart(){
+  const lines = document.getElementById('cart-lines');
+  const empty = document.getElementById('cart-empty');
+  const body = document.getElementById('cart-body');
+  if (cart.length === 0){ lines.innerHTML=''; empty.classList.remove('hidden'); body.classList.add('hidden'); return; }
+  empty.classList.add('hidden');
+  body.classList.remove('hidden');
+
+  lines.innerHTML = cart.map((line, idx) => `
+    <div class="flex items-center justify-between text-sm py-2" style="border-bottom:1px solid var(--border);">
+      <div class="min-w-0">
+        <div class="font-medium truncate">${line.qty} × ${esc(line.productName)}</div>
+        <div class="text-xs muted">${esc(line.variantLabel)} — ${fmt(line.unitPrice)} c/u</div>
+      </div>
+      <div class="flex items-center gap-3 flex-shrink-0">
+        <span class="font-bold">${fmt(line.lineTotal)}</span>
+        <button onclick="removeCartLine(${idx})" class="text-red-500 text-base">🗑️</button>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('cart-total').textContent = fmt(cartTotal());
+}
+function removeCartLine(idx){ cart.splice(idx,1); renderCart(); updateOrderBar(); }
+
+function sendOrderToWhatsApp(){
+  const store = document.getElementById('cf-store').value.trim();
+  const name = document.getElementById('cf-name').value.trim();
+  const phone = document.getElementById('cf-phone').value.trim();
+  const address = document.getElementById('cf-address').value.trim();
+
+  if (!store){ alert('Ingresa el nombre de la tienda.'); return; }
+  if (!name){ alert('Ingresa el nombre de la persona de contacto.'); return; }
+  if (!phone){ alert('Ingresa un teléfono de contacto.'); return; }
+  if (deliveryType === 'delivery' && !address){ alert('Ingresa la dirección de la tienda.'); return; }
+
+  const divider = '━━━━━━━━━━━━━━';
+  const itemLines = cart.map(l => `• ${l.qty} × ${l.productName} (${l.variantLabel}) — ${fmt(l.lineTotal)}`).join('\n');
+
+  let msg = `🥛 NUEVO PEDIDO — ${CONFIG.businessName}\n\n`;
+  msg += `🏪 Tienda: ${store}\n`;
+  msg += `👤 Contacto: ${name}\n`;
+  msg += `📞 Teléfono: ${phone}\n`;
+  msg += `🚚 Entrega: ${deliveryType === 'delivery' ? 'Domicilio' : 'Recoge en bodega'}\n`;
+  if (deliveryType === 'delivery') msg += `📍 Dirección: ${address}\n`;
+  msg += `${divider}\n`;
+  msg += `🛒 Pedido\n${itemLines}\n`;
+  msg += `${divider}\n\n`;
+  msg += `💰 TOTAL: ${fmt(cartTotal())}`;
+
+  const url = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+}
+
+// ---------- Compartir / QR ----------
+function openShareModal(){
+  const link = window.location.href;
+  document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(link);
+  openModal('share-modal');
+}
+function copyLink(){ navigator.clipboard.writeText(window.location.href).then(()=> alert('Link copiado')); }
+
+// ---------- Guardar contacto (vCard) ----------
+function downloadVCard(){
+  const vcf = [
+    'BEGIN:VCARD','VERSION:3.0',
+    `FN:${CONFIG.businessName}`, `ORG:${CONFIG.businessName}`,
+    `TEL;TYPE=CELL:${CONFIG.phoneTel}`, `NOTE:${CONFIG.tagline}`,
+    'END:VCARD'
+  ].join('\n');
+  const blob = new Blob([vcf], { type: 'text/vcard' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = CONFIG.businessName.replace(/\s+/g,'_') + '.vcf';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ---------- Init ----------
+initHeader();
+renderCatalog();
+renderPromosTab();
+renderHours();
+</script>
+
+</body>
+</html>
