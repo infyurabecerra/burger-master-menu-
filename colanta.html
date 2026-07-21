@@ -69,32 +69,12 @@
         <p id="rtagline" class="text-sm muted text-center mt-0.5"></p>
       </div>
 
-      <div class="flex items-start justify-between px-6 mt-4 gap-3">
-        <button id="status-chip" onclick="showTab('contacto')" class="text-left rounded-xl px-3 py-2 surface"></button>
-        <div id="rating-chip" class="text-right pt-1"></div>
-      </div>
-
       <div class="px-6 mt-5">
         <div class="brand-grad rounded-2xl p-5 text-white">
           <h2 class="font-display font-bold text-xl">Bienvenido a <span id="welcome-name"></span></h2>
           <p class="text-sm text-white/85 mt-1">¿Qué necesitas pedir hoy para tu tienda?</p>
           <button onclick="showTab('catalogo')" class="mt-4 bg-white text-sm font-bold px-4 py-2 rounded-full" style="color:var(--brand-dark);">Ver catálogo →</button>
         </div>
-      </div>
-
-      <div class="grid grid-cols-3 gap-3 mt-5 px-6 text-center">
-        <a id="wa-link" href="#" target="_blank" class="flex flex-col items-center">
-          <div class="icon-circle w-14 h-14 rounded-full flex items-center justify-center text-2xl text-white" style="background:#22c55e;">💬</div>
-          <span class="text-[11px] font-medium mt-1.5">WhatsApp</span>
-        </a>
-        <a id="call-link" href="#" class="flex flex-col items-center">
-          <div class="icon-circle w-14 h-14 rounded-full flex items-center justify-center text-2xl text-white brand-bg">📞</div>
-          <span class="text-[11px] font-medium mt-1.5">Llamar</span>
-        </a>
-        <a id="maps-link" href="#" target="_blank" class="flex flex-col items-center">
-          <div class="icon-circle w-14 h-14 rounded-full flex items-center justify-center text-2xl text-white" style="background:#ef4444;">📍</div>
-          <span class="text-[11px] font-medium mt-1.5">Ubicación</span>
-        </a>
       </div>
 
       <div class="px-6 mt-6">
@@ -257,9 +237,6 @@ const CONFIG = {
   phoneTel: "+573000000000",
   whatsappNumber: "573000000000",
   address: "Ingresa la dirección de la distribuidora",
-  ratingScore: "5.0",
-  ratingCount: 0,
-  schedule: { open: "07:00", close: "17:00", closedDays: [0] },
   hours: [
     { day: "Lunes a viernes", time: "7:00 am – 5:00 pm" },
     { day: "Sábado", time: "7:00 am – 1:00 pm" },
@@ -338,10 +315,6 @@ function findProduct(id){
     if (found) return found;
   }
 }
-function derivedMapsUrl(){
-  return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(CONFIG.address || CONFIG.businessName);
-}
-
 // ---------- Tabs ----------
 function showTab(name){
   document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
@@ -360,10 +333,7 @@ function initHeader(){
   document.getElementById('rtagline').textContent = CONFIG.tagline;
   document.getElementById('welcome-name').textContent = CONFIG.businessName;
   document.getElementById('rlocation').textContent = "📍 " + (CONFIG.address || "");
-  document.getElementById('call-link').href = 'tel:' + CONFIG.phoneTel;
-  document.getElementById('maps-link').href = derivedMapsUrl();
   const waHref = 'https://wa.me/' + CONFIG.whatsappNumber + '?text=' + encodeURIComponent('Hola ' + CONFIG.businessName + ', quiero hacer un pedido');
-  document.getElementById('wa-link').href = waHref;
   document.getElementById('wa-link-2').href = waHref;
 
   const avatar = document.getElementById('ravatar');
@@ -375,41 +345,8 @@ function initHeader(){
   if (CONFIG.heroImage){ hero.style.backgroundImage = `url('${CONFIG.heroImage}')`; heroPattern.classList.add('hidden'); }
   else { hero.style.backgroundImage = ''; heroPattern.classList.remove('hidden'); }
 
-  renderRating();
-  renderStatusBadge();
   renderPromo();
   renderHomeCats();
-}
-
-function renderRating(){
-  const el = document.getElementById('rating-chip');
-  if (!CONFIG.ratingScore){ el.innerHTML = ''; return; }
-  el.innerHTML = `
-    <div class="flex items-center justify-end gap-1 text-sm font-bold"><span class="brand-text">★</span>${esc(CONFIG.ratingScore)}</div>
-    <div class="text-[11px] muted">${Number(CONFIG.ratingCount||0).toLocaleString('es-CO')} reseñas</div>`;
-}
-
-function renderStatusBadge(){
-  const box = document.getElementById('status-chip');
-  const sched = CONFIG.schedule || {};
-  if (!sched.open || !sched.close){ box.innerHTML = ''; return; }
-  const now = new Date();
-  const day = now.getDay();
-  const closedToday = (sched.closedDays||[]).includes(day);
-  const [oh,om] = sched.open.split(':').map(Number);
-  const [ch,cm] = sched.close.split(':').map(Number);
-  const openMins = oh*60+om, closeMins = ch*60+cm;
-  const nowMins = now.getHours()*60 + now.getMinutes();
-  const isOpen = !closedToday && nowMins >= openMins && nowMins < closeMins;
-  if (isOpen){
-    box.innerHTML = `
-      <div class="flex items-center gap-1.5 text-xs font-semibold" style="color:#16a34a;"><span class="w-2 h-2 rounded-full" style="background:#16a34a;"></span>ABIERTO</div>
-      <div class="text-xs mt-0.5 muted">Hoy ${esc(sched.open)} - ${esc(sched.close)}</div>`;
-  } else {
-    box.innerHTML = `
-      <div class="flex items-center gap-1.5 text-xs font-semibold text-red-500"><span class="w-2 h-2 rounded-full bg-red-500"></span>CERRADO</div>
-      <div class="text-xs mt-0.5 muted">Hoy ${esc(sched.open)} - ${esc(sched.close)}</div>`;
-  }
 }
 
 function renderPromo(){
