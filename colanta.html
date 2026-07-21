@@ -59,8 +59,8 @@
 
     <!-- ============ TAB: INICIO ============ -->
     <div id="tab-inicio" class="tab-view active">
-      <div class="relative h-40 brand-grad flex items-end justify-center overflow-hidden">
-        <div class="absolute inset-0 opacity-20 text-6xl flex flex-wrap gap-3 p-2 select-none">🥛🧀🐄🥛🧈🐄🥛🧀</div>
+      <div id="hero" class="relative h-40 brand-grad flex items-end justify-center overflow-hidden bg-cover bg-center">
+        <div id="hero-pattern" class="absolute inset-0 opacity-20 text-6xl flex flex-wrap gap-3 p-2 select-none">🥛🧀🐄🥛🧈🐄🥛🧀</div>
       </div>
 
       <div class="px-6 -mt-12 relative">
@@ -252,7 +252,8 @@
 const CONFIG = {
   businessName: "Colanta",
   tagline: "Sabe más, sabe a campo",
-  avatarImage: "https://commons.wikimedia.org/wiki/Special:FilePath/Colanta_Logo.svg",
+  avatarImage: "https://i.postimg.cc/X7czrgvM/images-(1).png",
+  heroImage: "https://i.postimg.cc/CLy3B1HD/images.jpg",
   phoneTel: "+573000000000",
   whatsappNumber: "573000000000",
   address: "Ingresa la dirección de la distribuidora",
@@ -368,6 +369,11 @@ function initHeader(){
   const avatar = document.getElementById('ravatar');
   if (CONFIG.avatarImage){ avatar.style.backgroundImage = `url('${CONFIG.avatarImage}')`; avatar.textContent = ''; }
   else { avatar.style.backgroundImage = ''; avatar.textContent = '🐄'; }
+
+  const hero = document.getElementById('hero');
+  const heroPattern = document.getElementById('hero-pattern');
+  if (CONFIG.heroImage){ hero.style.backgroundImage = `url('${CONFIG.heroImage}')`; heroPattern.classList.add('hidden'); }
+  else { hero.style.backgroundImage = ''; heroPattern.classList.remove('hidden'); }
 
   renderRating();
   renderStatusBadge();
