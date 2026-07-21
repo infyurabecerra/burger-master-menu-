@@ -168,17 +168,6 @@
       <div id="cart-lines" class="mb-3"></div>
       <div class="flex justify-between font-bold text-base pt-2 mb-4" style="border-top:1px solid var(--border);"><span>Total</span><span id="cart-total">$0</span></div>
 
-      <div class="grid grid-cols-2 gap-3 mb-4">
-        <button id="dt-delivery" onclick="selectDeliveryType('delivery')" class="rounded-2xl p-3 text-center surface">
-          <div class="text-3xl mb-1">🚚</div>
-          <div class="font-bold text-xs">Domicilio</div>
-        </button>
-        <button id="dt-pickup" onclick="selectDeliveryType('pickup')" class="rounded-2xl p-3 text-center surface">
-          <div class="text-3xl mb-1">🏬</div>
-          <div class="font-bold text-xs">Recojo en bodega</div>
-        </button>
-      </div>
-
       <div class="space-y-3 mb-4">
         <div>
           <label class="text-xs font-semibold muted block mb-1">Nombre de la tienda / negocio</label>
@@ -192,7 +181,7 @@
           <label class="text-xs font-semibold muted block mb-1">Teléfono</label>
           <input id="cf-phone" type="tel" placeholder="Ej. 300 123 4567" class="w-full rounded-xl px-3 py-2 text-sm surface">
         </div>
-        <div id="cf-address-wrap">
+        <div>
           <label class="text-xs font-semibold muted block mb-1">Dirección de la tienda</label>
           <input id="cf-address" type="text" placeholder="Calle, barrio, referencia" class="w-full rounded-xl px-3 py-2 text-sm surface">
         </div>
@@ -297,11 +286,20 @@ const CATALOG = {
       variants: [{ id: "und", label: "Unidad", unitLabel: "und", tiers: [{ minQty: 1, price: 30600 }] }] },
     { id: "lp-ristra", name: "Ristra Leche en Polvo x12u", desc: "12 sobres de 25g c/u. No tiene cambio por fecha de vencimiento.", emoji: "🥣", bg: "#F1F8E9", image: "",
       variants: [{ id: "und", label: "Unidad", unitLabel: "ristra", tiers: [{ minQty: 1, price: 12600 }] }] }
-  ]
+  ],
+  "Carnes": [],
+  "Quesos": []
 };
 
+// Grupos que se muestran como accesos rápidos en Inicio.
+// "cats" agrupa una o más categorías reales del CATALOG bajo un mismo botón.
+const HOME_GROUPS = [
+  { label: "Carnes", emoji: "🥩", cats: ["Carnes"] },
+  { label: "Leches", emoji: "🥛", cats: ["Maxilitro Entera", "Maxilitro Deslactosada", "Leche Líquida", "Leche en Polvo"] },
+  { label: "Quesos", emoji: "🧀", cats: ["Quesos"] }
+];
+
 let cart = [];
-let deliveryType = 'delivery';
 let selection = {}; // productId -> { variantId, qty }
 
 // ---------- Utilidades ----------
@@ -367,11 +365,14 @@ function renderPromo(){
 
 function renderHomeCats(){
   const wrap = document.getElementById('home-cats');
-  wrap.innerHTML = Object.keys(CATALOG).map(cat => `
-    <button onclick="showTab('catalogo'); setTimeout(()=>scrollToCat('${esc(cat).replace(/'/g,"\\'")}'), 50);" class="surface rounded-2xl p-3 text-left">
-      <div class="text-2xl">🥛</div>
-      <div class="text-xs font-semibold mt-1">${esc(cat)}</div>
-    </button>`).join('');
+  wrap.innerHTML = HOME_GROUPS.map(group => {
+    const firstCat = group.cats[0];
+    return `
+    <button onclick="showTab('catalogo'); setTimeout(()=>scrollToCat('${esc(firstCat).replace(/'/g,"\\'")}'), 50);" class="surface rounded-2xl p-3 text-left">
+      <div class="text-2xl">${group.emoji}</div>
+      <div class="text-xs font-semibold mt-1">${esc(group.label)}</div>
+    </button>`;
+  }).join('');
 }
 
 // ---------- Catálogo ----------
@@ -416,6 +417,12 @@ function renderCatalog(){
     section.id = 'sec-' + slugify(cat);
     section.className = 'mt-4';
     section.innerHTML = `<h3 class="text-xs uppercase tracking-wide muted font-semibold mb-2 pt-2">${esc(cat)}</h3>`;
+    if (CATALOG[cat].length === 0){
+      const empty = document.createElement('div');
+      empty.className = 'surface rounded-2xl p-4 text-sm muted text-center mb-3';
+      empty.textContent = 'Próximamente agregaremos productos en esta categoría.';
+      section.appendChild(empty);
+    }
     CATALOG[cat].forEach(product => {
       section.appendChild(renderProductCard(product));
     });
@@ -542,15 +549,8 @@ function renderHours(){
 // ---------- Carrito / checkout ----------
 function openCartModal(){
   openModal('cart-modal');
-  applyDeliveryUI();
   renderCart();
 }
-function applyDeliveryUI(){
-  document.getElementById('dt-delivery').style.outline = deliveryType==='delivery' ? '2px solid var(--brand)' : 'none';
-  document.getElementById('dt-pickup').style.outline = deliveryType==='pickup' ? '2px solid var(--brand)' : 'none';
-  document.getElementById('cf-address-wrap').style.display = deliveryType === 'delivery' ? 'block' : 'none';
-}
-function selectDeliveryType(type){ deliveryType = type; applyDeliveryUI(); }
 
 function renderCart(){
   const lines = document.getElementById('cart-lines');
@@ -585,7 +585,7 @@ function sendOrderToWhatsApp(){
   if (!store){ alert('Ingresa el nombre de la tienda.'); return; }
   if (!name){ alert('Ingresa el nombre de la persona de contacto.'); return; }
   if (!phone){ alert('Ingresa un teléfono de contacto.'); return; }
-  if (deliveryType === 'delivery' && !address){ alert('Ingresa la dirección de la tienda.'); return; }
+  if (!address){ alert('Ingresa la dirección de la tienda.'); return; }
 
   const divider = '━━━━━━━━━━━━━━';
   const itemLines = cart.map(l => `• ${l.qty} × ${l.productName} (${l.variantLabel}) — ${fmt(l.lineTotal)}`).join('\n');
@@ -594,8 +594,7 @@ function sendOrderToWhatsApp(){
   msg += `🏪 Tienda: ${store}\n`;
   msg += `👤 Contacto: ${name}\n`;
   msg += `📞 Teléfono: ${phone}\n`;
-  msg += `🚚 Entrega: ${deliveryType === 'delivery' ? 'Domicilio' : 'Recoge en bodega'}\n`;
-  if (deliveryType === 'delivery') msg += `📍 Dirección: ${address}\n`;
+  msg += `📍 Dirección: ${address}\n`;
   msg += `${divider}\n`;
   msg += `🛒 Pedido\n${itemLines}\n`;
   msg += `${divider}\n\n`;
